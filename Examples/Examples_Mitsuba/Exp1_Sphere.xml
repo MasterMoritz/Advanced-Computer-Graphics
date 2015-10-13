@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<scene version="0.5.0">
+    <shape type="sphere">
+        <float name="radius" value="1"/>
+    </shape>
+   
+    <sensor type="perspective">
+        <transform name="toWorld">
+            <translate z="-5"/>
+        </transform>
+
+        <film type="ldrfilm"/>
+    </sensor>
+</scene>
+

@@ -1,0 +1,153 @@
+<?xml version='1.0' encoding='utf-8'?>
+
+<scene version="0.5.0">
+    <integrator type="path"/>
+
+    <sensor type="perspective">
+        <transform name="toWorld">        
+            <lookat origin="0,0,-8.5" target="0,0,0" up="0,1,0"/>
+        </transform>
+            
+        <float name="fov" value="50"/>
+
+        <sampler type="halton">
+            <integer name="sampleCount" value="16"/>
+        </sampler>
+
+        <film type="ldrfilm"/>
+    </sensor>
+
+    <shape type="obj">
+        <string name="filename" value="ExampleMeshes/teapot.obj"/>
+    
+        <transform name="toWorld">   
+            <rotate x="1" angle="10"/>     
+            <rotate z="1" angle="10"/>               
+            <scale x="0.4" y="0.4" z="0.4"/>  
+            <translate x="-0.217" y="-1.575"/>         
+            <translate x="2.0" z="0.5"/>     
+        </transform>
+
+        <bsdf type="dielectric">
+            <string name="intIOR" value="Diamond"/>
+            <string name="extIOR" value="Air"/>
+        </bsdf>
+    </shape>
+
+    <shape type="obj">
+        <string name="filename" value="ExampleMeshes/torus.obj"/>
+
+        <transform name="toWorld">  
+            <rotate x="1" angle="35"/>     
+            <rotate z="1" angle="55"/>                
+            <scale x="0.7" y="0.7" z="0.7"/>            
+            <translate x="-2.0" y="-1.0" z="1.0"/>         
+        </transform>
+
+        <bsdf type="conductor">
+            <string name="material" value="Au"/>
+        </bsdf>
+
+    </shape>
+
+    <shape type="sphere">
+        <float value="1" name="radius"/>
+
+        <transform name="toWorld">  
+            <scale x="0.7" y="0.7" z="0.7"/>            
+            <translate x="-0.5" y="-2.0" z="1.5"/>         
+        </transform>
+
+        <bsdf type="roughconductor">
+            <string name="distribution" value="ggx"/>
+        </bsdf>
+    </shape>
+
+    <shape type="sphere">
+        <float name="radius" value="0.25"/>
+
+        <transform name="toWorld">  
+            <translate x="2.0" y="2.0" z="-2.0"/>         
+        </transform>
+    
+        <emitter type="area">
+            <srgb name="radiance" value="12.0, 12.0, 12.0"/>     
+        </emitter>
+    </shape>
+
+    <shape type="sphere">
+        <float name="radius" value="0.15"/>
+
+        <transform name="toWorld">  
+            <translate x="-2.0" y="1.0" z="0.5"/>         
+        </transform>
+    
+        <emitter type="area">
+            <srgb name="radiance" value="7.0, 7.0, 7.0"/>     
+        </emitter>
+    </shape>
+
+
+
+    <shape type="rectangle">
+        <transform name="toWorld">        
+            <rotate x="1" angle="180"/> 
+            <scale x="4" y="3"/>  
+            <translate z="3"/>   
+        </transform>
+
+        <bsdf type="roughplastic">
+            <string name="distribution" value="ggx"/>
+            <float name="alpha" value="0.1"/>
+            <float name="intIOR" value="1.49"/>
+            <srgb name="diffuseReflectance" value="0.1, 0.75, 0.1"/>
+        </bsdf>
+    </shape>
+
+    <shape type="rectangle">
+        <transform name="toWorld">        
+            <rotate y="1" angle="90"/> 
+            <scale y="3" z="3"/>        
+            <translate x="-4" z="2"/>        
+        </transform>
+
+        <bsdf type="roughplastic">
+            <string name="distribution" value="ggx"/>
+            <float name="alpha" value="0.1"/>
+            <float name="intIOR" value="1.49"/>
+            <srgb name="diffuseReflectance" value="0.1, 0.1, 0.75"/>
+        </bsdf>
+    </shape>
+
+    <shape type="rectangle">
+        <transform name="toWorld">        
+            <rotate y="1" angle="270"/> 
+            <scale y="3" z="3"/>        
+            <translate x="4" z="2"/>        
+        </transform>
+
+        <bsdf type="roughplastic">
+            <string name="distribution" value="ggx"/>
+            <float name="alpha" value="0.1"/>
+            <float name="intIOR" value="1.49"/>
+            <srgb name="diffuseReflectance" value="0.75, 0.1, 0.1"/>
+        </bsdf>
+    </shape>
+
+    <shape type="rectangle">
+        <transform name="toWorld">        
+            <rotate x="1" angle="270"/> 
+            <scale x="4" z="3"/>  
+            <translate y="-3" z="2"/>   
+        </transform>
+
+        <bsdf type="roughplastic">
+            <string name="distribution" value="ggx"/>
+            <float name="alpha" value="0.1"/>
+            <float name="intIOR" value="1.49"/>
+            <srgb name="diffuseReflectance" value="0.8, 0.8, 0.8"/>
+        </bsdf>
+    </shape>
+
+
+</scene>

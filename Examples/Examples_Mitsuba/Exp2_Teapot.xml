@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<scene version="0.5.0">
+    <shape type="obj">
+        <string name="filename" value="ExampleMeshes/teapot.obj"/>
+    </shape>
+
+    <sensor type="perspective">
+        <transform name="toWorld">
+            <lookat origin="0.217,1.575,-9.76653" target="0.217,1.575,0" up="0,1,0"/>
+        </transform>
+
+        <film type="ldrfilm"/>
+    </sensor>
+</scene>
