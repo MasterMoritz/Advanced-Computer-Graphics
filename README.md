@@ -16,6 +16,9 @@ ___
 #### render scene :
 
 + cd 'repository directory/Renderscenes/00_Mitsuba'
-+ source MitsubaPaths.source
-+ mtsgui
++ 'source MitsubaPaths.source'
++ 'mtsgui'
+
 ___
+
+
