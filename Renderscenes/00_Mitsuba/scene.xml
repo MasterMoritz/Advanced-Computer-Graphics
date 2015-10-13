@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<scene version="0.5.0">
+    <integrator type="path"/>
+
+
+	<bsdf type="diffuse" id="light">
+        <spectrum name="reflectance" value="400:0.78, 500:0.78, 600:0.78, 700:0.78"/>
+    </bsdf>
+
+	<bsdf type="mixturebsdf" id="glass">
+		<string name="weights" value="0.7, 0.3"/>
+        
+		<bsdf type="dielectric"/>
+        
+		<bsdf type="roughdielectric">
+			<float name="alpha" value="0.3"/>
+		</bsdf>
+	</bsdf>
+
+    <shape type="obj">
+        <string name="filename" value="../../Models/myLittleDragon.obj"/>
+        <ref id="glass"/>
+    </shape>
+</scene>
