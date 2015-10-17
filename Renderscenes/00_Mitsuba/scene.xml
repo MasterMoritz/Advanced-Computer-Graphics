@@ -2,12 +2,17 @@
 
 <scene version="0.5.0">
     <integrator type="photonmapper"/>
-		<sensor type="perspective">
-			<transform name="toWorld">
-				<lookAt origin="4, 10, 10" target="0, 0, 0" up="0, 1, 0"/>
-			</transform>
+		    <sensor type="perspective">
+        <string name="fovAxis" value="smaller"/>
+        <float name="nearClip" value="10"/>
+        <float name="farClip" value="2800"/>
+        <float name="focusDistance" value="1000"/>
 
-			<float name="fov" value="90"/>
+        <transform name="toWorld">
+            <lookAt origin="278, 273, -800" target="278, 273, -799" up="0, 1, 0"/>
+        </transform>
+		
+			<float name="fov" value="39.3077"/>
 
 			<sampler type="ldsampler">
 				<integer name="sampleCount" value="64"/>
@@ -49,24 +54,33 @@
     <shape type="obj">
         <string name="filename" value="../../Models/myLittleDragon.obj"/>
         <ref id="glass"/>
+		<transform name="toWorld">
+			<scale value ="42"/>
+			<rotate y="1" angle="180"/>
+            <translate x="278" y="0" z="250"/>
+        </transform>
     </shape>
 	
 	<shape type="obj">
 		<string name="filename" value="../../Models/igs.obj"/>
 			<ref id="light"/>
-
-			<emitter type="area">
-				<spectrum name="radiance" value="400:0, 500:8, 600:15.6, 700:18.4"/>
-			</emitter>
+			
+            <transform name="toWorld">
+				<scale value="100"/>
+				<rotate y="1" angle="180"/>
+                <translate x="278" y="420" z="555"/>
+            </transform>
+			
+            <emitter type="area">
+                <spectrum name="radiance" value="400:0.0, 500:1, 600:0.5, 700:0.1"/>
+            </emitter>
+	
     </shape>
+	
+ 
 	
 	<shape type="obj">
         <string name="filename" value="../../Models/cbox_floor.obj"/>
-        <ref id="white"/>
-    </shape>
-
-    <shape type="obj">
-        <string name="filename" value="../../Models/cbox_ceiling.obj"/>
         <ref id="white"/>
     </shape>
 
