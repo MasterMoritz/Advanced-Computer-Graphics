@@ -248,6 +248,78 @@ struct Rectangle
     }  
 };
 
+/*------------------------------------------------------------------
+| Basic geometric element of scene description;
+| Triangles are subdivided into smaller patches for radiosity
+| computation (subdivision equal for all triangles)
+------------------------------------------------------------------*/
+struct Triangle {
+
+	Vector p0; //origin               
+	Vector edge_a, edge_b, edge_c; //edges making up the triangle
+	Color emission, color;
+	Vector normal;
+	
+	vector<Color> patch; 
+	int a_num, b_num;       /* Number of patches/subdivision of edges */
+	double a_len, b_len, c_len;    /* Edge lengths */
+
+	//create a triangle
+	Triangle(const Vector p0_, 
+			 const Vector &a_, const Vector &b_,
+			 const Color &emission_, const Color &color_) :
+             p0(p0_), edge_a(a_), edge_b(b_), emission(emission_), color(color_) {
+
+		edge_c = edge_a - edge_b; //diagonal edge from point b to point a
+        normal = edge_a.Cross(edge_b);
+        normal = normal.Normalized();        
+        a_len = edge_a.Length();
+        b_len = edge_b.Length();
+		c_len = edge_c.Length();
+    }
+
+	//TODO
+    Color sample_patch(int ia, int ib) const 
+    {
+        if (ia < 0) ia = 0;
+        if (ia >= a_num) ia = a_num - 1;
+        if (ib < 0) ib = 0;
+        if (ib >= b_num) ib = b_num - 1;
+        return patch[ia * b_num + ib];
+    }
+
+	//TODO
+    void init_patchs(const int a_num_, const int b_num_) 
+    {
+        a_num = a_num_;
+        b_num = b_num_;
+        patch.clear();
+        patch.resize(a_num * b_num);
+    }
+
+	//TODO
+    /* Triangle-ray intersection */
+    const double intersect(const Ray &ray) 
+    {
+        /* Check for plane-ray intersection first */
+        const double t = (p0 - ray.org).Dot(normal) / ray.dir.Dot(normal);
+        if (t <= 0.00001)
+            return 0.0;
+
+        /* Determine if intersection is within rectangle */
+        Vector p = ray.org + ray.dir * t;
+        Vector d = p - p0;
+        const double ddota = d.Dot(edge_a);
+        if (ddota < 0.0 || ddota > edge_a.LengthSquared())
+            return 0.0;
+        
+        const double ddotb = d.Dot(edge_b);
+        if (ddotb < 0.0 || ddotb > edge_b.LengthSquared())
+            return 0.0;
+        
+        return t;
+    }  
+};
 
 /******************************************************************
 * Hard-coded scene definition: the geometry is composed of rectangles. 
@@ -288,6 +360,79 @@ Rectangle recs[] =
               Vector(), Color(0.75, 0.75, 0.75)), /* Top */
 };
 
+/******************************************************************
+* Hard-coded scene definition: the geometry is composed of triangles. 
+* These are defined by:
+* - vector to corner(origin), edge a, edge b 
+* - emitted light energy (light sources), surface reflectivity (~color)
+*******************************************************************/
+Triangle triangles[] = 
+{	
+    /* Cornell Box walls */
+	//back
+    Triangle(Vector(0.0, 0.0, 0.0), Vector(100.0, 0.0, 0.0), Vector(0.0, 80.0, 0.0),   
+              Vector(), Color(0.75, 0.75, 0.75)),
+    Triangle(Vector(100.0, 80.0, 0.0), Vector(0.0, -80.0, 0.0), Vector(-100.0, 0.0, 0.0),   
+              Vector(), Color(0.75, 0.75, 0.75)),
+	//bottom
+    Triangle(Vector(0.0, 0.0, 170.0), Vector(100.0, 0.0, 0.0), Vector(0.0, 0.0, -170.0), 
+              Vector(), Color(0.75, 0.75, 0.75)),
+    Triangle(Vector(100.0, 0.0, 0.0), Vector(0.0, 0.0, 170.0), Vector(-100.0, 0.0, 0.0), 
+              Vector(), Color(0.75, 0.75, 0.75)),
+	//top
+    Triangle(Vector(0.0, 80.0, 0.0), Vector(100.0, 0.0, 0.0), Vector(0.0, 0.0, 170.0),  
+              Vector(), Color(0.75, 0.75, 0.75)),
+    Triangle(Vector(100.0, 80.0, 170.0), Vector(0.0, 0.0, -170.0), Vector(-100.0, 0.0, 0.0),  
+              Vector(), Color(0.75, 0.75, 0.75)),
+	//left
+    Triangle(Vector(0.0, 0.0, 170.0), Vector(0.0, 0.0, -170.0), Vector(0.0, 80.0, 0.0),   
+              Vector(), Color(0.75, 0.25, 0.25)),
+    Triangle(Vector(0.0, 80.0, 170.0), Vector(0.0, -80.0, 0.0), Vector(0.0, 0.0, 170.0),   
+              Vector(), Color(0.75, 0.25, 0.25)),	
+	//right
+    Triangle(Vector(100.0, 0.0, 0.0), Vector(0.0, 0.0, 170.0), Vector(0.0, 80.0, 0.0),   
+              Vector(), Color(0.25, 0.25, 0.75)),
+    Triangle(Vector(100.0, 80.0, 170.0), Vector(0.0, -80.0, 0.0), Vector(0.0, 0.0, -170.0),   
+              Vector(), Color(0.25, 0.25, 0.75)),
+	//front (not visible)
+    Triangle(Vector(100.0, 0.0, 170.0), Vector(-100.0, 0.0, 0.0), Vector(0.0, -80.0, 0.0),  
+              Vector(), Color(0,1,0)),
+    Triangle(Vector(0.0, -80.0, 170.0), Vector(0.0, 80.0, 0.0), Vector(100.0, 0.0, 0.0),  
+              Vector(), Color(0,1,0)),
+	
+    /* Area light source on top */
+    Triangle(Vector(40.0, 79.99, 65.0), Vector(20.0, 0.0, 0.0), Vector(0.0, 0.0, 20.0), 
+              Vector(12,12,12), Color(0.75, 0.75, 0.75)),
+    Triangle(Vector(60.0, 79.99, 85.0), Vector(0.0, 0.0, -20.0), Vector(-20.0, 0.0, 0.0), 
+              Vector(12,12,12), Color(0.75, 0.75, 0.75)),
+
+    /* Cuboid in room */
+	//right
+    Triangle(Vector(30.0, 0.0, 100.0), Vector(0.0, 0.0, -20.0), Vector(0.0, 40.0, 0.0),   
+              Vector(), Color(0.75, 0.75, 0.75)),
+    Triangle(Vector(30.0, 40.0, 80.0), Vector(0.0, -40.0, 0.0), Vector(0.0, 0.0, 20.0),   
+              Vector(), Color(0.75, 0.75, 0.75)),
+	//left
+    Triangle(Vector(10.0, 0.0, 80.0), Vector(0.0, 0.0, 20.0), Vector(0.0, 40.0, 0.0),   
+              Vector(), Color(0.75, 0.75, 0.75)),
+    Triangle(Vector(10.0, 40.0, 100.0), Vector(0.0, -40.0, 0.0), Vector(0.0, 0.0, -20.0),   
+              Vector(), Color(0.75, 0.75, 0.75)),
+	//front
+    Triangle(Vector(10.0, 0.0, 100.0), Vector(20.0, 0.0, 0.0), Vector(0.0, 40.0, 0.0),   
+              Vector(), Color(0.75, 0.75, 0.75)),
+    Triangle(Vector(30.0, 40.0, 100.0), Vector(0.0, -40.0, 0.0), Vector(-20.0, 0.0, 0.0),   
+              Vector(), Color(0.75, 0.75, 0.75)),
+	//back
+    Triangle(Vector(30.0, 0.0, 80.0), Vector(-20.0, 0.0, 0.0), Vector(0.0, -40.0, 0.0),  
+              Vector(), Color(0.75, 0.75, 0.75)),
+    Triangle(Vector(10.0, -40.0, 80.0), Vector(0.0, 40.0, 0.0), Vector(20.0, 0.0, 0.0),  
+              Vector(), Color(0.75, 0.75, 0.75)),
+	//top
+    Triangle(Vector(10.0, 40.0, 100.0), Vector(20.0, 0.0, 0.0), Vector(0.0, 0.0, -20.0), 
+              Vector(), Color(0.75, 0.75, 0.75)),
+    Triangle(Vector(30.0, 40.0, 80.0), Vector(0.0, 0.0, 20.0), Vector(-20.0, 0.0, 0.0), 
+              Vector(), Color(0.75, 0.75, 0.75)),
+};
 
 /******************************************************************
 * Check for closest intersection of a ray with the scene;
