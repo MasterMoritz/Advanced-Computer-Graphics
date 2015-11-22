@@ -315,12 +315,12 @@ struct Triangle {
 				Vector s = p - p2;
 				const double detT = (p0.x - p2.x)*(p1.y - p2.y) - (p0.y - p2.y)*(p1.x - p2.x);
 
-				/* Use Möller-Trumbore's approach */
+				/* Use Moeller-Trumbore's approach */
 
 				/* We utilize Cramer's Rule to solve: [-d e0 e1]*[t l0 l1]T = s */
-				const double t = s.Cross(e0).operator*(-1).Dot(e1) / detT;
-				const double l0 = d.operator*(-1).Cross(s).operator*(-1).Dot(e1) / detT;
-				const double l1 = d.operator*(-1).Cross(e0).operator*(-1).Dot(s) / detT;
+				const double t = s.Cross(e0)*(-1).Dot(e1) / detT;
+				const double l0 = d*(-1).Cross(s)*(-1).Dot(e1) / detT;
+				const double l1 = d*(-1).Cross(e0)*(-1).Dot(s) / detT;
 
 				/* Check for plane-ray intersection */
         if (t <= 0.00001)
