@@ -327,7 +327,7 @@ struct Triangle {
             return 0.0;
 
         /* Determine if intersection is within triangle */
-        if (l0 < 0.0 || l0 > 1.0 || l1 < 0.0 || l1 > 1.0)
+        if (l0 < 0.0 || l0 > 1.0 || l1 < 0.0 || l1 > 1.0 || 1-l0-l1 < 0.0)
             return 0.0;
         
         return t;
