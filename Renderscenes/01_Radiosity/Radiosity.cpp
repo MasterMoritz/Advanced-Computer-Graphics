@@ -34,6 +34,11 @@
 #include <cstring>
 #include <vector>
 
+#ifdef _WIN32
+#include "drand48.h"
+#define M_PI 3.14159265358979323846
+#endif
+
 using namespace std;
 
 const double Over_M_PI = 1.0/M_PI;
