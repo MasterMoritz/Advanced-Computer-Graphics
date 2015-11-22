@@ -21,4 +21,11 @@ ___
 
 ___
 
+## 01_Radiosity
+
+#### render scene :
+
++ make
++ executing radiosity will give 2 output images
+___
 
