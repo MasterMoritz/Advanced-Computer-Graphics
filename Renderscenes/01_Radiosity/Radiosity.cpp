@@ -264,19 +264,19 @@ struct Triangle {
 	int a_num, b_num;       /* Number of patches/subdivision of edges */
 	double a_len, b_len, c_len;    /* Edge lengths */
 
-	//create a triangle
+	//create a triangle, diagonal edge is calculated from 2 given edges
 	Triangle(const Vector p0_, 
 			 const Vector &a_, const Vector &b_,
 			 const Color &emission_, const Color &color_) :
-             p0(p0_), edge_a(a_), edge_b(b_), emission(emission_), color(color_) {
+			 p0(p0_), edge_a(a_), edge_b(b_), emission(emission_), color(color_) {
 
 		edge_c = edge_a - edge_b; //diagonal edge from point b to point a
-        normal = edge_a.Cross(edge_b);
-        normal = normal.Normalized();        
-        a_len = edge_a.Length();
-        b_len = edge_b.Length();
+		normal = edge_a.Cross(edge_b);
+		normal = normal.Normalized();        
+		a_len = edge_a.Length();
+		b_len = edge_b.Length();
 		c_len = edge_c.Length();
-    }
+	}
 
 	//TODO
     Color sample_patch(int ia, int ib) const 
