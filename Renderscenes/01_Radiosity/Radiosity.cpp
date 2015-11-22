@@ -302,24 +302,32 @@ struct Triangle {
         patch.resize(a_num * b_num);
     }
 
-	//TODO
     /* Triangle-ray intersection */
     const double intersect(const Ray &ray) 
     {
-        /* Check for plane-ray intersection first */
-        const double t = (p0 - ray.org).Dot(normal) / ray.dir.Dot(normal);
+				// name attributes same to the lecture slides for clarification
+				Vector p = ray.org;
+				Vector d = ray.dir;
+				Vector p1 = edge_a - p0;
+				Vector p2 = edge_b - p0;
+				Vector e0 = p0 - p2;
+				Vector e1 = p1 - p2;
+				Vector s = p - p2;
+				const double detT = (p0.x - p2.x)*(p1.y - p2.y) - (p0.y - p2.y)*(p1.x - p2.x);
+
+				/* Use Möller-Trumbore's approach */
+
+				/* We utilize Cramer's Rule to solve: [-d e0 e1]*[t l0 l1]T = s */
+				const double t = s.Cross(e0).operator*(-1).Dot(e1) / detT;
+				const double l0 = d.operator*(-1).Cross(s).operator*(-1).Dot(e1) / detT;
+				const double l1 = d.operator*(-1).Cross(e0).operator*(-1).Dot(s) / detT;
+
+				/* Check for plane-ray intersection */
         if (t <= 0.00001)
             return 0.0;
 
-        /* Determine if intersection is within rectangle */
-        Vector p = ray.org + ray.dir * t;
-        Vector d = p - p0;
-        const double ddota = d.Dot(edge_a);
-        if (ddota < 0.0 || ddota > edge_a.LengthSquared())
-            return 0.0;
-        
-        const double ddotb = d.Dot(edge_b);
-        if (ddotb < 0.0 || ddotb > edge_b.LengthSquared())
+        /* Determine if intersection is within triangle */
+        if (l0 < 0.0 || l0 > 1.0 || l1 < 0.0 || l1 > 1.0)
             return 0.0;
         
         return t;
