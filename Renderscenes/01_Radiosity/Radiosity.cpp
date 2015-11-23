@@ -318,9 +318,9 @@ struct Triangle {
 				/* Use Moeller-Trumbore's approach */
 
 				/* We utilize Cramer's Rule to solve: [-d e0 e1]*[t l0 l1]T = s */
-				const double t = s.Cross(e0)*(-1).Dot(e1) / detT;
-				const double l0 = d*(-1).Cross(s)*(-1).Dot(e1) / detT;
-				const double l1 = d*(-1).Cross(e0)*(-1).Dot(s) / detT;
+				const double t = (s.Cross(e0)*(-1)).Dot(e1) / detT;
+				const double l0 = ((d*(-1)).Cross(s)*(-1)).Dot(e1) / detT;
+				const double l1 = ((d*(-1)).Cross(e0)*(-1)).Dot(s) / detT;
 
 				/* Check for plane-ray intersection */
         if (t <= 0.00001)
