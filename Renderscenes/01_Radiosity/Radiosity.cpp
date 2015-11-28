@@ -409,8 +409,8 @@ void Calculate_Form_Factors(const int a_div_num, const int b_div_num,
             for (int ib = 0; ib < triangles[i].b_num; ib ++) 
             {
                 patch_area[patch_i + ia* triangles[i].b_num + ib] =
-					((triangles[i].edge_a / triangles[i].a_num).
-                            Cross((triangles[i].edge_b / triangles[i].b_num))).Length();  
+					(((triangles[i].edge_a / triangles[i].a_num).
+                            Cross((triangles[i].edge_b / triangles[i].b_num))).Length())/2;  
             }
         }
     }
