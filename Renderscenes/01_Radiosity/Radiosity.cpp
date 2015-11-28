@@ -226,7 +226,7 @@ struct Triangle {
 	}
 
 	//TODO
-	void init_patchs(const int a_num_, const int b_num_)
+	void init_patches(const int a_num_, const int b_num_)
 	{
 		a_num = a_num_;
 		b_num = b_num_;
@@ -380,7 +380,7 @@ void Calculate_Form_Factors(const int a_div_num, const int b_div_num,
 	const int n = int(sizeof(triangles) / sizeof(Triangle));
 	for (int i = 0; i < n; i++)
 	{
-		triangles[i].init_patchs(a_div_num, b_div_num);
+		triangles[i].init_patches(a_div_num, b_div_num);
 		patch_num += triangles[i].a_num * triangles[i].b_num;
 	}
 
