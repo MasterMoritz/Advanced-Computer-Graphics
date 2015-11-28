@@ -384,7 +384,7 @@ void Calculate_Form_Factors(const int a_div_num, const int b_div_num,
 		patch_num += triangles[i].a_num * triangles[i].b_num;
 	}
 
-	std::cout << "Number of rectangles: " << n << endl;
+	std::cout << "Number of triangles: " << n << endl;
 	cout << "Number of patches: " << patch_num << endl;
 	int form_factor_num = patch_num * patch_num;
 	cout << "Number of form factors: " << form_factor_num << endl;
@@ -397,7 +397,7 @@ void Calculate_Form_Factors(const int a_div_num, const int b_div_num,
 	double *patch_area = new double[patch_num];
 	memset(patch_area, 0.0, sizeof(double) * patch_num);
 
-	/* Precompute patch areas, assuming same size for each rectangle */
+	/* Precompute patch areas, assuming same size for each triangle */
 	for (int i = 0; i < n; i++)
 	{
 		int patch_i = 0;
@@ -425,19 +425,27 @@ void Calculate_Form_Factors(const int a_div_num, const int b_div_num,
 			offset[i] += triangles[k].a_num * triangles[k].b_num;
 	}
 
-	/* Loop over all rectangles in scene */
+	/* Loop over all triangles in scene */
 	for (int i = 0; i < n; i++)
 	{
 		int patch_i = offset[i];
 
 		cout << i << " ";
 
-		/* Loop over all patches in rectangle i */
-		for (int ia = 0; ia < triangles[i].a_num; ia++)
+		/* Loop over all patches in triangle i */
+		for (int ia_iterator = 0; ia_iterator < triangles[i].a_num; ia_iterator++)
 		{
 			cout << "*" << flush;
-			for (int ib = 0; ib < triangles[i].b_num; ib++)
+			for (int ib_iterator = 0; ib_iterator < triangles[i].b_num; ib_iterator++)
 			{
+				int ia = ia_iterator, ib = ib_iterator;
+				int idirection_modifier = 1;	// -1 for patches in opposite direction to triangle; applied to edge_a and edge_b
+				if (ia + ib >= triangles[i].a_num) { //above edge_c
+					ia = triangles[i].a_num - ia;	//mirror along edge_c
+					ib = triangles[i].b_num - ib;
+					idirection_modifier = -1;
+				}
+
 				const Vector normal_i = triangles[i].normal;
 
 				int patch_j = 0;
@@ -448,10 +456,17 @@ void Calculate_Form_Factors(const int a_div_num, const int b_div_num,
 					const Vector normal_j = triangles[j].normal;
 
 					/* Loop over all patches in rectangle j */
-					for (int ja = 0; ja < triangles[j].a_num; ja++)
+					for (int ja_iterator = 0; ja_iterator < triangles[j].a_num; ja_iterator++)
 					{
-						for (int jb = 0; jb < triangles[j].b_num; jb++)
+						for (int jb_iterator = 0; jb_iterator < triangles[j].b_num; jb_iterator++)
 						{
+							int ja = ja_iterator, jb = jb_iterator;
+							int jdirection_modifier = 1;	// -1 for patches in opposite direction to triangle; applied to edge_a and edge_b
+							if (ja + jb >= triangles[j].a_num) { //above edge_c
+								ja = triangles[j].a_num - ja;	//mirror along edge_c
+								jb = triangles[j].b_num - jb;
+								jdirection_modifier = -1;
+							}
 							/* Do not compute form factors for patches on same rectangle;
 								 also exploit symmetry to reduce computation;
 								 intermediate values; will be divided by patch area below */
@@ -464,8 +479,8 @@ void Calculate_Form_Factors(const int a_div_num, const int b_div_num,
 
 								/* Uniform PDF for Monte Carlo (1/Ai)x(1/Aj) */
 								const double pdf =
-									(1.0 / patch_area[offset[i] + ia*triangles[i].b_num + ib]) *
-									(1.0 / patch_area[offset[j] + ja*triangles[j].b_num + jb]);
+									(1.0 / patch_area[offset[i] + ia_iterator*triangles[i].b_num + ib_iterator]) *
+									(1.0 / patch_area[offset[j] + ja_iterator*triangles[j].b_num + jb_iterator]);
 
 								/* Determine rays of NixNi uniform samples of patch
 									 on i to NjxNj uniform samples of patch on j */
@@ -477,11 +492,13 @@ void Calculate_Form_Factors(const int a_div_num, const int b_div_num,
 									const double l0 = 1 - sqrt(e0);
 									const double l1 = e1 * sqrt(e1);
 									const double l2 = 1 - l0 - l1;
-									const Vector p0 = triangles[i].p0; //CHANGE NEEDED: SHOULD BE PATCH, NOT FULL TRIANGLE
-									const Vector p1 = p0 + triangles[i].edge_a; //CHANGE NEEDED: SHOULD BE PATCH, NOT FULL TRIANGLE
-									const Vector p2 = p0 + triangles[i].edge_b; //CHANGE NEEDED: SHOULD BE PATCH, NOT FULL TRIANGLE
+									const Vector patch_edge_a = triangles[i].edge_a / triangles[i].a_num;
+									const Vector patch_edge_b = triangles[i].edge_b / triangles[i].b_num;
+									const Vector p0 = triangles[i].p0 + ia*patch_edge_a + ib*patch_edge_b;
+									const Vector p1 = p0 + patch_edge_a*idirection_modifier;
+									const Vector p2 = p0 + patch_edge_b*idirection_modifier;
 									const Vector xi = l0 * p0 + l1 * p1 + l2 * p2;
-									// TODO: THIS ONLY SAMPLES A FULL TRIANGLE. WE NEED TO SAMPLE THE PATCHES INSTEAD!!!!!
+
 									for (int jas = 0; jas < Nj*Nj; jas++)
 									{
 										/* Determine sample point xj on second patch */
@@ -490,11 +507,12 @@ void Calculate_Form_Factors(const int a_div_num, const int b_div_num,
 										const double l0 = 1 - sqrt(e0);
 										const double l1 = e1 * sqrt(e1);
 										const double l2 = 1 - l0 - l1;
-										const Vector p0 = triangles[j].p0; //CHANGE NEEDED: SHOULD BE PATCH, NOT FULL TRIANGLE
-										const Vector p1 = p0 + triangles[j].edge_a; //CHANGE NEEDED: SHOULD BE PATCH, NOT FULL TRIANGLE
-										const Vector p2 = p0 + triangles[j].edge_b; //CHANGE NEEDED: SHOULD BE PATCH, NOT FULL TRIANGLE
-										const Vector xj = l0 * p0 + l1 * p1 + l2 * p2; //CHANGE NEEDED: SHOULD BE PATCH, NOT FULL TRIANGLE
-										// TODO: THIS ONLY SAMPLES A FULL TRIANGLE. WE NEED TO SAMPLE THE PATCHES INSTEAD!!!!! (e.g. by dividing by triangles[j].num_b, the rest is dependend on how the triangles are divided into patches)
+										const Vector patch_edge_a = triangles[j].edge_a / triangles[j].a_num;
+										const Vector patch_edge_b = triangles[j].edge_b / triangles[j].b_num;
+										const Vector p0 = triangles[j].p0 + ja*patch_edge_a + jb*patch_edge_b;
+										const Vector p1 = p0 + patch_edge_a*jdirection_modifier;
+										const Vector p2 = p0 + patch_edge_b*jdirection_modifier;
+										const Vector xj = l0 * p0 + l1 * p1 + l2 * p2;
 
 										/* Check for visibility between sample points */
 										const Vector ij = (xj - xi).Normalized();
