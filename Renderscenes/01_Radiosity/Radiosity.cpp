@@ -235,35 +235,37 @@ struct Triangle {
 	}
 
 	/* Triangle-ray intersection */
-	const double intersect(const Ray &ray)
-	{
-		// name attributes same to the lecture slides for clarification
-		Vector p = ray.org;
-		Vector d = ray.dir;
-		Vector p1 = edge_a - p0;
-		Vector p2 = edge_b - p0;
-		Vector e0 = p0 - p2;
-		Vector e1 = p1 - p2;
-		Vector s = p - p2;
-		const double detT = (p0.x - p2.x)*(p1.y - p2.y) - (p0.y - p2.y)*(p1.x - p2.x);
+    const double intersect(const Ray &ray)
+    {
 
-		/* Use Moeller-Trumbore's approach */
+        Vector dir = ray.dir;
+        Vector orig = ray.org;
+        Vector pvec = dir.Cross(edge_b);
+        double det = edge_a.Dot(pvec);
 
-		/* We utilize Cramer's Rule to solve: [-d e0 e1]*[t l0 l1]T = s */
-		const double t = (s.Cross(e0)*(-1)).Dot(e1) / detT;
-		const double l0 = ((d*(-1)).Cross(s)*(-1)).Dot(e1) / detT;
-		const double l1 = ((d*(-1)).Cross(e0)*(-1)).Dot(s) / detT;
+        if (det == 0)
+            return 0.0;
 
-		/* Check for plane-ray intersection */
-		if (t <= 0.00001)
-			return 0.0;
+        double invDet = 1.0 / det;
+        Vector tvec = orig - p0;
+        double u = tvec.Dot(pvec) * invDet;
 
-		/* Determine if intersection is within triangle */
-		if (l0 < 0.0 || l0 > 1.0 || l1 < 0.0 || l1 > 1.0 || 1 - l0 - l1 < 0.0)
-			return 0.0;
+        if (u < 0 || u > 1)
+            return 0.0;
 
-		return t;
-	}
+        Vector qvec = tvec.Cross(edge_a);
+        double v = dir.Dot(qvec) * invDet;
+
+        if (v < 0 || u + v > 1)
+            return 0.0;
+
+        double t = edge_b.Dot(qvec) * invDet;
+
+        if (t <= 0.00000001)
+            return 0.0;
+
+        return t;
+    }
 };
 
 /******************************************************************
@@ -278,65 +280,65 @@ Triangle triangles[] =
 //back
 	Triangle(Vector(0.0, 0.0, 0.0), Vector(100.0, 0.0, 0.0), Vector(0.0, 80.0, 0.0),
 						Vector(), Color(0.75, 0.75, 0.75)),
-	Triangle(Vector(100.0, 80.0, 0.0), Vector(0.0, -80.0, 0.0), Vector(-100.0, 0.0, 0.0),
+	Triangle(Vector(100.0, 80.0, 0.0), Vector(-100.0, 0.0, 0.0), Vector(0.0, -80.0, 0.0),
 						Vector(), Color(0.75, 0.75, 0.75)),
 	//bottom
 		Triangle(Vector(0.0, 0.0, 170.0), Vector(100.0, 0.0, 0.0), Vector(0.0, 0.0, -170.0),
 							Vector(), Color(0.75, 0.75, 0.75)),
-		Triangle(Vector(100.0, 0.0, 0.0), Vector(0.0, 0.0, 170.0), Vector(-100.0, 0.0, 0.0),
+		Triangle(Vector(100.0, 0.0, 0.0), Vector(-100.0, 0.0, 0.0), Vector(0.0, 0.0, 170.0),
 							Vector(), Color(0.75, 0.75, 0.75)),
 	//top
 		Triangle(Vector(0.0, 80.0, 0.0), Vector(100.0, 0.0, 0.0), Vector(0.0, 0.0, 170.0),
 							Vector(), Color(0.75, 0.75, 0.75)),
-		Triangle(Vector(100.0, 80.0, 170.0), Vector(0.0, 0.0, -170.0), Vector(-100.0, 0.0, 0.0),
+		Triangle(Vector(100.0, 80.0, 170.0), Vector(-100.0, 0.0, 0.0), Vector(0.0, 0.0, -170.0),
 							Vector(), Color(0.75, 0.75, 0.75)),
 	//left
 		Triangle(Vector(0.0, 0.0, 170.0), Vector(0.0, 0.0, -170.0), Vector(0.0, 80.0, 0.0),
 							Vector(), Color(0.75, 0.25, 0.25)),
-		Triangle(Vector(0.0, 80.0, 170.0), Vector(0.0, -80.0, 0.0), Vector(0.0, 0.0, 170.0),
+		Triangle(Vector(0.0, 80.0, 0.0), Vector(0.0, 0.0, 170.0), Vector(0.0, -80.0, 0.0),
 							Vector(), Color(0.75, 0.25, 0.25)),
 	//right
 		Triangle(Vector(100.0, 0.0, 0.0), Vector(0.0, 0.0, 170.0), Vector(0.0, 80.0, 0.0),
 							Vector(), Color(0.25, 0.25, 0.75)),
-		Triangle(Vector(100.0, 80.0, 170.0), Vector(0.0, -80.0, 0.0), Vector(0.0, 0.0, -170.0),
+		Triangle(Vector(100.0, 80.0, 170.0), Vector(0.0, 0.0, -170.0), Vector(0.0, -80.0, 0.0),
 							Vector(), Color(0.25, 0.25, 0.75)),
 	//front (not visible)
 		Triangle(Vector(100.0, 0.0, 170.0), Vector(-100.0, 0.0, 0.0), Vector(0.0, -80.0, 0.0),
 							Vector(), Color(0,1,0)),
-		Triangle(Vector(0.0, -80.0, 170.0), Vector(0.0, 80.0, 0.0), Vector(100.0, 0.0, 0.0),
+		Triangle(Vector(0.0, -80.0, 170.0), Vector(100.0, 0.0, 0.0), Vector(0.0, -80.0, 0.0),
 							Vector(), Color(0,1,0)),
 
 	/* Area light source on top */
 	Triangle(Vector(40.0, 79.99, 65.0), Vector(20.0, 0.0, 0.0), Vector(0.0, 0.0, 20.0),
 						Vector(12,12,12), Color(0.75, 0.75, 0.75)),
-	Triangle(Vector(60.0, 79.99, 85.0), Vector(0.0, 0.0, -20.0), Vector(-20.0, 0.0, 0.0),
+	Triangle(Vector(60.0, 79.99, 85.0), Vector(-20.0, 0.0, 0.0), Vector(0.0, 0.0, -20.0),
 						Vector(12,12,12), Color(0.75, 0.75, 0.75)),
 
 	/* Cuboid in room */
 //right
 	Triangle(Vector(30.0, 0.0, 100.0), Vector(0.0, 0.0, -20.0), Vector(0.0, 40.0, 0.0),
 						Vector(), Color(0.75, 0.75, 0.75)),
-	Triangle(Vector(30.0, 40.0, 80.0), Vector(0.0, -40.0, 0.0), Vector(0.0, 0.0, 20.0),
+	Triangle(Vector(30.0, 40.0, 80.0), Vector(0.0, 0.0, 20.0), Vector(0.0, -40.0, 0.0),
 						Vector(), Color(0.75, 0.75, 0.75)),
 	//left
 		Triangle(Vector(10.0, 0.0, 80.0), Vector(0.0, 0.0, 20.0), Vector(0.0, 40.0, 0.0),
 							Vector(), Color(0.75, 0.75, 0.75)),
-		Triangle(Vector(10.0, 40.0, 100.0), Vector(0.0, -40.0, 0.0), Vector(0.0, 0.0, -20.0),
+		Triangle(Vector(10.0, 40.0, 100.0), Vector(0.0, 0.0, -20.0), Vector(0.0, -40.0, 0.0),
 							Vector(), Color(0.75, 0.75, 0.75)),
 	//front
 		Triangle(Vector(10.0, 0.0, 100.0), Vector(20.0, 0.0, 0.0), Vector(0.0, 40.0, 0.0),
 							Vector(), Color(0.75, 0.75, 0.75)),
-		Triangle(Vector(30.0, 40.0, 100.0), Vector(0.0, -40.0, 0.0), Vector(-20.0, 0.0, 0.0),
+		Triangle(Vector(30.0, 40.0, 100.0), Vector(-20.0, 0.0, 0.0), Vector(0.0, -40.0, 0.0),
 							Vector(), Color(0.75, 0.75, 0.75)),
 	//back
 		Triangle(Vector(30.0, 0.0, 80.0), Vector(-20.0, 0.0, 0.0), Vector(0.0, -40.0, 0.0),
 							Vector(), Color(0.75, 0.75, 0.75)),
-		Triangle(Vector(10.0, -40.0, 80.0), Vector(0.0, 40.0, 0.0), Vector(20.0, 0.0, 0.0),
+		Triangle(Vector(10.0, -40.0, 80.0), Vector(20.0, 0.0, 0.0), Vector(0.0, 40.0, 0.0),
 							Vector(), Color(0.75, 0.75, 0.75)),
 	//top
 		Triangle(Vector(10.0, 40.0, 100.0), Vector(20.0, 0.0, 0.0), Vector(0.0, 0.0, -20.0),
 							Vector(), Color(0.75, 0.75, 0.75)),
-		Triangle(Vector(30.0, 40.0, 80.0), Vector(0.0, 0.0, 20.0), Vector(-20.0, 0.0, 0.0),
+		Triangle(Vector(30.0, 40.0, 80.0), Vector(-20.0, 0.0, 0.0), Vector(0.0, 0.0, 20.0),
 							Vector(), Color(0.75, 0.75, 0.75)),
 };
 
@@ -739,8 +741,8 @@ Color Radiance(const Ray &ray, const int depth, bool interpolation = true)
 
 int main(int argc, char **argv)
 {
-	int width = 640;
-	int height = 480;
+	int width = 1024;
+	int height = 768;
 	int samples = 4;
 
 	/* Set camera origin and viewing direction (negative z direction) */
