@@ -219,7 +219,6 @@ struct Triangle {
 		c_len = edge_c.Length();
 	}
 
-	//TODO
 	Color sample_patch(int ia, int ib) const
 	{
 		if (ia < 0) ia = 0;
@@ -229,7 +228,6 @@ struct Triangle {
 		return patch[ia * b_num + ib];
 	}
 
-	//TODO
 	void init_patches(const int a_num_, const int b_num_)
 	{
 		a_num = a_num_;
