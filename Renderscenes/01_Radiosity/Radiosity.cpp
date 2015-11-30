@@ -237,37 +237,36 @@ struct Triangle {
 	}
 
 	/* Triangle-ray intersection */
-    const double intersect(const Ray &ray)
-    {
+	const double intersect(const Ray &ray) {
 
-        Vector dir = ray.dir;
-        Vector orig = ray.org;
-        Vector pvec = dir.Cross(edge_b);
-        double det = edge_a.Dot(pvec);
+		Vector dir = ray.dir;
+		Vector orig = ray.org;
+		Vector pvec = dir.Cross(edge_b);
+		double det = edge_a.Dot(pvec);
 
-        if (det == 0)
-            return 0.0;
+		if (det == 0)
+			return 0.0;
 
-        double invDet = 1.0 / det;
-        Vector tvec = orig - p0;
-        double u = tvec.Dot(pvec) * invDet;
+		double invDet = 1.0 / det;
+		Vector tvec = orig - p0;
+		double u = tvec.Dot(pvec) * invDet;
 
-        if (u < 0 || u > 1)
-            return 0.0;
+		if (u < 0 || u > 1)
+			return 0.0;
 
-        Vector qvec = tvec.Cross(edge_a);
-        double v = dir.Dot(qvec) * invDet;
+		Vector qvec = tvec.Cross(edge_a);
+		double v = dir.Dot(qvec) * invDet;
 
-        if (v < 0 || u + v > 1)
-            return 0.0;
+		if (v < 0 || u + v > 1)
+			return 0.0;
 
-        double t = edge_b.Dot(qvec) * invDet;
+		double t = edge_b.Dot(qvec) * invDet;
 
-        if (t <= 0.00000001)
-            return 0.0;
+		if (t <= 0.00000001)
+			return 0.0;
 
-        return t;
-    }
+		return t;
+	}
 };
 
 /******************************************************************
