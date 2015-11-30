@@ -1,5 +1,8 @@
 /******************************************************************
 *
+* Philipp Wirtenberger, Andreas Moritz
+*
+*
 * Radiosity.cpp
 *
 * Description: This file demonstrates global illumination rendering
@@ -858,3 +861,25 @@ int main(int argc, char **argv)
 	img_interpolated.Save(string("image_smooth.ppm"));
 	delete(form_factor);
 }
+
+
+
+
+
+
+/******************************************************************
+*
+* Comparison of renderings:
+*
+*
+* image_patches.ppm
+*
+* These two renderings are very similar: the only difference are the rectangular/triangular patches.
+*
+*
+* image_smooth.ppm
+*
+* The main difference between the two renderings are the visible diagonal seams, which are due to the triangular scene geometry 
+* (only patches on the individual triangles are interpolated, not the mesh geometry).
+*
+*******************************************************************/
