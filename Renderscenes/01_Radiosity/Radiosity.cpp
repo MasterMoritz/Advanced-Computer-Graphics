@@ -1,5 +1,8 @@
 /******************************************************************
 *
+* Philipp Wirtenberger, Andreas Moritz
+*
+*
 * Radiosity.cpp
 *
 * Description: This file demonstrates global illumination rendering
@@ -284,7 +287,8 @@ struct Triangle {
 Triangle triangles[] =
 {
 	/* Cornell Box walls */
-//back
+    
+    //back
 	Triangle(Vector(0.0, 0.0, 0.0), Vector(100.0, 0.0, 0.0), Vector(0.0, 80.0, 0.0),
 						Vector(), Color(0.75, 0.75, 0.75)),
 	Triangle(Vector(100.0, 80.0, 0.0), Vector(-100.0, 0.0, 0.0), Vector(0.0, -80.0, 0.0),
@@ -322,7 +326,8 @@ Triangle triangles[] =
 						Vector(12,12,12), Color(0.75, 0.75, 0.75)),
 
 	/* Cuboid in room */
-//right
+    
+    //right
 	Triangle(Vector(30.0, 0.0, 100.0), Vector(0.0, 0.0, -20.0), Vector(0.0, 40.0, 0.0),
 						Vector(), Color(0.75, 0.75, 0.75)),
 	Triangle(Vector(30.0, 40.0, 80.0), Vector(0.0, 0.0, 20.0), Vector(0.0, -40.0, 0.0),
@@ -375,7 +380,7 @@ bool Intersect_Scene(const Ray &ray, double *t, int *id, Vector *normal)
 
 /******************************************************************
 * Determine all form factors for all pairs of patches (of all
-* rectangles);
+* triangles);
 * Evaluation of integrals in form factor equation is done via
 * Monte Carlo integration; samples are uniformly distributed and
 * equally weighted;
@@ -457,12 +462,12 @@ void Calculate_Form_Factors(const int a_div_num, const int b_div_num,
 
 				int patch_j = 0;
 
-				/* Loop over all rectangles in scene for rectangle i */
+				/* Loop over all triangles in scene for triangle i */
 				for (int j = 0; j < n; j++)
 				{
 					const Vector normal_j = triangles[j].normal;
 
-					/* Loop over all patches in rectangle j */
+					/* Loop over all patches in triangle j */
 					for (int ja_iterator = 0; ja_iterator < triangles[j].a_num; ja_iterator++)
 					{
 						for (int jb_iterator = 0; jb_iterator < triangles[j].b_num; jb_iterator++)
@@ -678,13 +683,13 @@ Color Radiance(const Ray &ray, const int depth, bool interpolation = true)
 	int id;
 	Vector normal;
 
-	/* Find intersected rectangle */
+	/* Find intersected triangle */
 	if (!Intersect_Scene(ray, &t, &id, &normal))
 	{
 		return BackgroundColor;
 	}
 
-	/* Determine intersection point on rectangle */
+	/* Determine intersection point on triangle */
 	const Triangle &obj = triangles[id];
 	const Vector hitpoint = ray.org + t * ray.dir;
 
@@ -699,6 +704,18 @@ Color Radiance(const Ray &ray, const int depth, bool interpolation = true)
 	int ia = int(da); if (ia >= obj.a_num) ia--;
 	int ib = int(db); if (ib >= obj.b_num) ib--;
 
+    // check if upper triangle patches
+    if((da-ia) + (db-ib) > 1.0) {
+        //take upper right instead of lower left corner
+        ++ia;
+        ++ib;
+
+        //use inverse mapping to the one we used when subdividing into patches (i.e. mirror once again along edge_c)
+        //(thus projecting the indices to points above edge_c in order to access the correct array elements)
+        ia = obj.a_num - ia;
+        ib = obj.b_num - ib;
+    }
+
 	/* Bicubic interpolation for smooth image */
 	if (interpolation)
 	{
@@ -711,7 +728,8 @@ Color Radiance(const Ray &ray, const int depth, bool interpolation = true)
 		{
 			for (int j = 0; j < 4; j++)
 			{
-				c[i][j] = obj.sample_patch(ia + i - 1, ib + j - 1);
+                // take average of upper and lower triangle in rectangle
+				c[i][j] = (obj.sample_patch(ia + i - 1, ib + j - 1) +  obj.sample_patch(obj.a_num - (ia + i - 1) - 1, obj.b_num - (ib + j - 1) - 1)) / 2;
 			}
 		}
 
@@ -849,3 +867,25 @@ int main(int argc, char **argv)
 	img_interpolated.Save(string("image_smooth.ppm"));
 	delete(form_factor);
 }
+
+
+
+
+
+
+/******************************************************************
+*
+* Comparison of renderings:
+*
+*
+* image_patches.ppm
+*
+* These two renderings are very similar: the only difference are the rectangular/triangular patches.
+*
+*
+* image_smooth.ppm
+*
+* The main difference between the two renderings are the visible diagonal seams, which are due to the triangular scene geometry 
+* (only patches on the individual triangles are interpolated, not the mesh geometry).
+*
+*******************************************************************/
