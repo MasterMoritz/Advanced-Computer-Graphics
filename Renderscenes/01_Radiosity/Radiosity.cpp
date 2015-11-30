@@ -239,7 +239,9 @@ struct Triangle {
 		patch.resize(a_num * b_num);
 	}
 
-	/* Triangle-ray intersection */
+	/* Triangle-ray intersection 
+	 * Moeller-Trumbore approach
+	*/
 	const double intersect(const Ray &ray) {
 		double epsilon = 0.0000001;
 
@@ -288,70 +290,70 @@ Triangle triangles[] =
 {
 	/* Cornell Box walls */
     
-    //back
+	//back
 	Triangle(Vector(0.0, 0.0, 0.0), Vector(100.0, 0.0, 0.0), Vector(0.0, 80.0, 0.0),
-						Vector(), Color(0.75, 0.75, 0.75)),
+			 Vector(), Color(0.75, 0.75, 0.75)),
 	Triangle(Vector(100.0, 80.0, 0.0), Vector(-100.0, 0.0, 0.0), Vector(0.0, -80.0, 0.0),
-						Vector(), Color(0.75, 0.75, 0.75)),
+			 Vector(), Color(0.75, 0.75, 0.75)),
 	//bottom
-		Triangle(Vector(0.0, 0.0, 170.0), Vector(100.0, 0.0, 0.0), Vector(0.0, 0.0, -170.0),
-							Vector(), Color(0.75, 0.75, 0.75)),
-		Triangle(Vector(100.0, 0.0, 0.0), Vector(-100.0, 0.0, 0.0), Vector(0.0, 0.0, 170.0),
-							Vector(), Color(0.75, 0.75, 0.75)),
+	Triangle(Vector(0.0, 0.0, 170.0), Vector(100.0, 0.0, 0.0), Vector(0.0, 0.0, -170.0),
+			 Vector(), Color(0.75, 0.75, 0.75)),
+	Triangle(Vector(100.0, 0.0, 0.0), Vector(-100.0, 0.0, 0.0), Vector(0.0, 0.0, 170.0),
+			 Vector(), Color(0.75, 0.75, 0.75)),
 	//top
-		Triangle(Vector(0.0, 80.0, 0.0), Vector(100.0, 0.0, 0.0), Vector(0.0, 0.0, 170.0),
-							Vector(), Color(0.75, 0.75, 0.75)),
-		Triangle(Vector(100.0, 80.0, 170.0), Vector(-100.0, 0.0, 0.0), Vector(0.0, 0.0, -170.0),
-							Vector(), Color(0.75, 0.75, 0.75)),
+	Triangle(Vector(0.0, 80.0, 0.0), Vector(100.0, 0.0, 0.0), Vector(0.0, 0.0, 170.0),
+			 Vector(), Color(0.75, 0.75, 0.75)),
+	Triangle(Vector(100.0, 80.0, 170.0), Vector(-100.0, 0.0, 0.0), Vector(0.0, 0.0, -170.0),
+			 Vector(), Color(0.75, 0.75, 0.75)),
 	//left
-		Triangle(Vector(0.0, 0.0, 170.0), Vector(0.0, 0.0, -170.0), Vector(0.0, 80.0, 0.0),
-							Vector(), Color(0.75, 0.25, 0.25)),
-		Triangle(Vector(0.0, 80.0, 0.0), Vector(0.0, 0.0, 170.0), Vector(0.0, -80.0, 0.0),
-							Vector(), Color(0.75, 0.25, 0.25)),
+	Triangle(Vector(0.0, 0.0, 170.0), Vector(0.0, 0.0, -170.0), Vector(0.0, 80.0, 0.0),
+			 Vector(), Color(0.75, 0.25, 0.25)),
+	Triangle(Vector(0.0, 80.0, 0.0), Vector(0.0, 0.0, 170.0), Vector(0.0, -80.0, 0.0),
+			 Vector(), Color(0.75, 0.25, 0.25)),
 	//right
-		Triangle(Vector(100.0, 0.0, 0.0), Vector(0.0, 0.0, 170.0), Vector(0.0, 80.0, 0.0),
-							Vector(), Color(0.25, 0.25, 0.75)),
-		Triangle(Vector(100.0, 80.0, 170.0), Vector(0.0, 0.0, -170.0), Vector(0.0, -80.0, 0.0),
-							Vector(), Color(0.25, 0.25, 0.75)),
+	Triangle(Vector(100.0, 0.0, 0.0), Vector(0.0, 0.0, 170.0), Vector(0.0, 80.0, 0.0),
+			 Vector(), Color(0.25, 0.25, 0.75)),
+	Triangle(Vector(100.0, 80.0, 170.0), Vector(0.0, 0.0, -170.0), Vector(0.0, -80.0, 0.0),
+			 Vector(), Color(0.25, 0.25, 0.75)),
 	//front (not visible)
-		Triangle(Vector(100.0, 0.0, 170.0), Vector(-100.0, 0.0, 0.0), Vector(0.0, -80.0, 0.0),
-							Vector(), Color(0,1,0)),
-		Triangle(Vector(0.0, -80.0, 170.0), Vector(100.0, 0.0, 0.0), Vector(0.0, -80.0, 0.0),
-							Vector(), Color(0,1,0)),
+	Triangle(Vector(100.0, 0.0, 170.0), Vector(-100.0, 0.0, 0.0), Vector(0.0, -80.0, 0.0),
+			 Vector(), Color(0,1,0)),
+	Triangle(Vector(0.0, -80.0, 170.0), Vector(100.0, 0.0, 0.0), Vector(0.0, -80.0, 0.0),
+			 Vector(), Color(0,1,0)),
 
 	/* Area light source on top */
 	Triangle(Vector(40.0, 79.99, 65.0), Vector(20.0, 0.0, 0.0), Vector(0.0, 0.0, 20.0),
-						Vector(12,12,12), Color(0.75, 0.75, 0.75)),
+			 Vector(12,12,12), Color(0.75, 0.75, 0.75)),
 	Triangle(Vector(60.0, 79.99, 85.0), Vector(-20.0, 0.0, 0.0), Vector(0.0, 0.0, -20.0),
-						Vector(12,12,12), Color(0.75, 0.75, 0.75)),
+			 Vector(12,12,12), Color(0.75, 0.75, 0.75)),
 
 	/* Cuboid in room */
     
     //right
 	Triangle(Vector(30.0, 0.0, 100.0), Vector(0.0, 0.0, -20.0), Vector(0.0, 40.0, 0.0),
-						Vector(), Color(0.75, 0.75, 0.75)),
+			 Vector(), Color(0.75, 0.75, 0.75)),
 	Triangle(Vector(30.0, 40.0, 80.0), Vector(0.0, 0.0, 20.0), Vector(0.0, -40.0, 0.0),
-						Vector(), Color(0.75, 0.75, 0.75)),
+			 Vector(), Color(0.75, 0.75, 0.75)),
 	//left
-		Triangle(Vector(10.0, 0.0, 80.0), Vector(0.0, 0.0, 20.0), Vector(0.0, 40.0, 0.0),
-							Vector(), Color(0.75, 0.75, 0.75)),
-		Triangle(Vector(10.0, 40.0, 100.0), Vector(0.0, 0.0, -20.0), Vector(0.0, -40.0, 0.0),
-							Vector(), Color(0.75, 0.75, 0.75)),
+	Triangle(Vector(10.0, 0.0, 80.0), Vector(0.0, 0.0, 20.0), Vector(0.0, 40.0, 0.0),
+			 Vector(), Color(0.75, 0.75, 0.75)),
+	Triangle(Vector(10.0, 40.0, 100.0), Vector(0.0, 0.0, -20.0), Vector(0.0, -40.0, 0.0),
+			 Vector(), Color(0.75, 0.75, 0.75)),
 	//front
-		Triangle(Vector(10.0, 0.0, 100.0), Vector(20.0, 0.0, 0.0), Vector(0.0, 40.0, 0.0),
-							Vector(), Color(0.75, 0.75, 0.75)),
-		Triangle(Vector(30.0, 40.0, 100.0), Vector(-20.0, 0.0, 0.0), Vector(0.0, -40.0, 0.0),
-							Vector(), Color(0.75, 0.75, 0.75)),
+	Triangle(Vector(10.0, 0.0, 100.0), Vector(20.0, 0.0, 0.0), Vector(0.0, 40.0, 0.0),
+			 Vector(), Color(0.75, 0.75, 0.75)),
+	Triangle(Vector(30.0, 40.0, 100.0), Vector(-20.0, 0.0, 0.0), Vector(0.0, -40.0, 0.0),
+			 Vector(), Color(0.75, 0.75, 0.75)),
 	//back
-		Triangle(Vector(30.0, 0.0, 80.0), Vector(-20.0, 0.0, 0.0), Vector(0.0, -40.0, 0.0),
-							Vector(), Color(0.75, 0.75, 0.75)),
-		Triangle(Vector(10.0, -40.0, 80.0), Vector(20.0, 0.0, 0.0), Vector(0.0, 40.0, 0.0),
-							Vector(), Color(0.75, 0.75, 0.75)),
+	Triangle(Vector(30.0, 0.0, 80.0), Vector(-20.0, 0.0, 0.0), Vector(0.0, -40.0, 0.0),
+			 Vector(), Color(0.75, 0.75, 0.75)),
+	Triangle(Vector(10.0, -40.0, 80.0), Vector(20.0, 0.0, 0.0), Vector(0.0, 40.0, 0.0),
+			 Vector(), Color(0.75, 0.75, 0.75)),
 	//top
-		Triangle(Vector(10.0, 40.0, 100.0), Vector(20.0, 0.0, 0.0), Vector(0.0, 0.0, -20.0),
-							Vector(), Color(0.75, 0.75, 0.75)),
-		Triangle(Vector(30.0, 40.0, 80.0), Vector(-20.0, 0.0, 0.0), Vector(0.0, 0.0, 20.0),
-							Vector(), Color(0.75, 0.75, 0.75)),
+	Triangle(Vector(10.0, 40.0, 100.0), Vector(20.0, 0.0, 0.0), Vector(0.0, 0.0, -20.0),
+			 Vector(), Color(0.75, 0.75, 0.75)),
+	Triangle(Vector(30.0, 40.0, 80.0), Vector(-20.0, 0.0, 0.0), Vector(0.0, 0.0, 20.0),
+			 Vector(), Color(0.75, 0.75, 0.75)),
 };
 
 /******************************************************************
@@ -885,7 +887,7 @@ int main(int argc, char **argv)
 *
 * image_smooth.ppm
 *
-* The main difference between the two renderings are the visible diagonal seams, which are due to the triangular scene geometry 
-* (only patches on the individual triangles are interpolated, not the mesh geometry).
+* The main difference between the two renderings are the visible diagonal seams, 
+* which are due to interpolating triangles isolated rather than taking neighboring triangles into account.
 *
 *******************************************************************/
