@@ -136,6 +136,10 @@ struct Image
 	int width, height;
 	Color *pixels;
 
+	~Image() {
+		delete pixels;
+	}
+
 	Image(int _w, int _h) : width(_w), height(_h)
 	{
 		pixels = new Color[width * height];
@@ -579,7 +583,8 @@ void Calculate_Form_Factors(const int a_div_num, const int b_div_num,
 				form_factor[i * patch_num + j] = 1.0;
 		}
 	}
-	free(offset);
+	delete(offset);
+	delete(patch_area);
 }
 
 
@@ -839,4 +844,5 @@ int main(int argc, char **argv)
 
 	img.Save(string("image_patches.ppm"));
 	img_interpolated.Save(string("image_smooth.ppm"));
+	delete(form_factor);
 }
