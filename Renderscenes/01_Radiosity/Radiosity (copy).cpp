@@ -242,34 +242,37 @@ struct Triangle {
 
 		Vector d = ray.dir;
 		Vector p = ray.org;
-		Vector s = p - p0;
+
+		Vector pvec = d.Cross(edge_b);
 
 		//ray and triangle are parallel if determinant is close to 0
-		double detT = d.Cross(edge_b).Dot(edge_a);
+		double detT = edge_a.Dot(pvec);
 
 		if (fabs(detT) < epsilon) {
 			return 0.0;
 		}
 
-		//check ray-plane instersection
+		Vector s = p - p0;
+		Vector qvec = s.Cross(edge_a);
 		double inv_detT = 1 / detT;
-		double t = (s.Cross(edge_a).Dot(edge_b)) * inv_detT;
+
+		//check ray-plane instersection
+		double t = edge_b.Dot(qvec) * inv_detT;
 
 		if (t <= epsilon)
 			return 0.0;
 
 		//check if intersection is within triangle
-		double bary_x = -1*(d.Cross(s).Dot(edge_b)) * inv_detT;
+		double bary_x = s.Dot(pvec) * inv_detT;
 
 		if (bary_x < 0 || bary_x > 1) {
 			return 0.0;
 		}
 
-		double bary_y = -1*(d.Cross(edge_a).Dot(s)) * inv_detT;
+		double bary_y = d.Dot(qvec) * inv_detT;
 
-		if (bary_y < 0 || bary_x + bary_y > 1) {
+		if (bary_y < 0 || bary_x + bary_y > 1)
 			return 0.0;
-		}
 
 		return t;
 	}
