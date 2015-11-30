@@ -481,7 +481,7 @@ void Calculate_Form_Factors(const int a_div_num, const int b_div_num,
 								jb = triangles[j].b_num - jb;
 								jdirection_modifier = -1;
 							}
-							/* Do not compute form factors for patches on same rectangle;
+							/* Do not compute form factors for patches on same triangle;
 								 also exploit symmetry to reduce computation;
 								 intermediate values; will be divided by patch area below */
 							if (i < j)
@@ -537,7 +537,7 @@ void Calculate_Form_Factors(const int a_div_num, const int b_div_num,
 										if (Intersect_Scene(Ray(xi, ij), &t, &id, &normal) &&
 											id != j)
 										{
-											continue; /* If intersection with other rectangle */
+											continue; /* If intersection with other triangle */
 										}
 
 										/* Cosines of angles beteen normals and ray inbetween */
