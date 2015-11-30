@@ -399,12 +399,20 @@ void Calculate_Form_Factors(const int a_div_num, const int b_div_num,
 	double *patch_area = new double[patch_num];
 	memset(patch_area, 0.0, sizeof(double) * patch_num);
 
+	/* Offsets for indexing of patches in 1D-array */
+	int *offset = new int[n];
+
+	for (int i = 0; i < n; i++)
+	{
+		offset[i] = 0;
+		for (int k = 0; k < i; k++)
+			offset[i] += triangles[k].a_num * triangles[k].b_num;
+	}
+
 	/* Precompute patch areas, assuming same size for each triangle */
 	for (int i = 0; i < n; i++)
 	{
-		int patch_i = 0;
-		for (int k = 0; k < i; k++)
-			patch_i += triangles[k].a_num * triangles[k].b_num;
+		int patch_i = offset[i];
 
 		for (int ia = 0; ia < triangles[i].a_num; ia++)
 		{
@@ -415,16 +423,6 @@ void Calculate_Form_Factors(const int a_div_num, const int b_div_num,
 						Cross((triangles[i].edge_b / triangles[i].b_num))).Length()) / 2;
 			}
 		}
-	}
-
-	/* Offsets for indexing of patches in 1D-array */
-	int *offset = new int[n];
-
-	for (int i = 0; i < n; i++)
-	{
-		offset[i] = 0;
-		for (int k = 0; k < i; k++)
-			offset[i] += triangles[k].a_num * triangles[k].b_num;
 	}
 
 	/* Loop over all triangles in scene */
@@ -581,6 +579,7 @@ void Calculate_Form_Factors(const int a_div_num, const int b_div_num,
 				form_factor[i * patch_num + j] = 1.0;
 		}
 	}
+	free(offset);
 }
 
 
