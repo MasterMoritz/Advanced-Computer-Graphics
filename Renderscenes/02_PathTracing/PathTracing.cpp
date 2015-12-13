@@ -19,6 +19,10 @@
 *
 *******************************************************************/
 
+//object loader
+#define TINYOBJLOADER_IMPLEMENTATION // define this in only *one* source
+#include "tiny_obj_loader.h"
+
 /* Standard includes */
 #include <cmath>   
 #include <cstdlib> 
