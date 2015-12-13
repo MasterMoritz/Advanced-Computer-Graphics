@@ -273,7 +273,7 @@ bool Intersect(const Ray &ray, double &t, int &id)
 * (possibly via specular reflection, refraction), controlled by 
 * parameter E = 0/1;  
 * on diffuse surfaces light sources are explicitely sampled;
-* for transparent objects, Schlick´s approximation is employed;
+* for transparent objects, Schlick's approximation is employed;
 * for first 3 bounces obtain reflected and refracted component,
 * afterwards one of the two is chosen randomly   
 *******************************************************************/
@@ -421,7 +421,7 @@ Color Radiance(const Ray &ray, int depth, int E)
     else
         tdir = (ray.dir * nnt + normal * (ddn * nnt + sqrt(cos2t))).Normalized();
 
-    /* Determine R0 for Schlick´s approximation */
+    /* Determine R0 for Schlick's approximation */
     double a = nt - nc;
     double b = nt + nc;
     double R0 = a*a / (b*b);
@@ -433,7 +433,7 @@ Color Radiance(const Ray &ray, int depth, int E)
     else
         c = 1 - tdir.Dot(normal);
 
-    /* Compute Schlick´s approximation of Fresnel equation */ 
+    /* Compute Schlick's approximation of Fresnel equation */ 
     double Re = R0 + (1 - R0) *c*c*c*c*c;   /* Reflectance */
     double Tr = 1 - Re;                     /* Transmittance */
 
