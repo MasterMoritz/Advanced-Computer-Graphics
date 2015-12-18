@@ -28,6 +28,11 @@
 #include <cstdlib> 
 #include <iostream>
 #include <fstream>
+#ifdef _WIN32
+#include "drand48.h"
+#define M_PI 3.14159265358979323846
+#define M_1_PI   0.31830988618379067154
+#endif
 
 using namespace std;
 
