@@ -30,8 +30,9 @@
 #include <fstream>
 #ifdef _WIN32
 #include "drand48.h"
-#define M_PI 3.14159265358979323846
-#define M_1_PI   0.31830988618379067154
+#define M_PI    3.14159265358979323846
+#define M_1_PI  0.31830988618379067154
+#define M_4_PI  1.27323954473516268615107010698011488
 #endif
 
 using namespace std;
@@ -237,7 +238,7 @@ struct Sphere
 Sphere spheres[] = 
 {
     Sphere( 1e5, Vector( 1e5  +1,      40.8,      81.6),  Vector(), Vector(.75,.25,.25), DIFF), /* Left wall */
-    Sphere( 1e5, Vector(-1e5 +99,      40.8,      81.6),  Vector(), Vector(.25,.25,.75), DIFF), /* Rght wall */
+    Sphere( 1e5, Vector(-1e5 +99,      40.8,      81.6),  Vector(), Vector(.25,.25,.75), DIFF), /* Right wall */
     Sphere( 1e5, Vector(      50,      40.8,       1e5),  Vector(), Vector(.75,.75,.75), DIFF), /* Back wall */
     Sphere( 1e5, Vector(      50,      40.8, -1e5 +170),  Vector(), Vector(),            DIFF), /* Front wall */
     Sphere( 1e5, Vector(      50,       1e5,      81.6),  Vector(), Vector(.75,.75,.75), DIFF), /* Floor */
@@ -472,19 +473,40 @@ Color Radiance(const Ray &ray, int depth, int E)
 
 int main(int argc, char *argv[]) 
 {
+    // PathTracing [samples per subpixel] [(sqrt of) samples on lens] [focal distance|cm] [aperture|f-stops]
+    
+    //assumption: values are given in cm (somewhat realistic size of box)   
+    /* Default values */
     int width = 1024;
     int height = 768;
     int samples = 1;
+    int lens_samples = 1;
+    double focal_distance = 248.6;  //focused on metal sphere (217.6 would focus on glass sphere)   
+    double image_distance = 1;  //for our virtual camera the image sensor is 1 unit away from the lens   
+    double fstops = .2; // smaller f-stop -> shallower depth of field (here: ridiculisly low value to demonstrate depth of field)
 
-    if(argc == 2)
+    /* User input */
+    if(argc >= 2)
         samples = atoi(argv[1]);
+    if(argc >= 3)
+        lens_samples = atoi(argv[2]);
+    if(argc == 5) {
+        focal_distance = atof(argv[3]);
+        fstops = atof(argv[4]);
+    }
+    
+    /* Computed values */
+    double focal_length = 1 / (1/image_distance + 1/focal_distance);    //focus length for given distances of focal & image plane to the lens
+     /* Adapt behaviour of fstops to those of a real camera with focal length of 100mm (where distance to image sensor is not exactly 10mm but dependent on the focal distance) */
+    fstops *= focal_length / 10;
+    double aperture = focal_length/fstops;
      
     /* Set camera origin and viewing direction (negative z direction) */
-    Ray camera(Vector(50.0, 52.0, 295.6), Vector(0.0, -0.042612, -1.0).Normalized());
+    Ray camera(Vector(50.0, 52.0, 170 + 125.6), Vector(0.0, -0.042612, -1.0).Normalized());
 
     /* Image edge vectors for pixel sampling */
-    Vector cx = Vector(width * 0.5135 / height);
-    Vector cy = (cx.Cross(camera.dir)).Normalized() * 0.5135;
+    Vector cx = Vector(width * 0.5135 / height);    // cx = aspect ratio * .5, e.g. 1.2 * .5 (-> so that cx/cy reach end of column/row after the same number of steps)
+    Vector cy = (cx.Cross(camera.dir)).Normalized() * 0.5135; // cy = 1 * .5
 
     /* Final rendering */
     Image img(width, height);
@@ -526,19 +548,53 @@ int main(int argc, char *argv[])
                         else
                             dy = 1.0 - sqrt(2.0 - r2);
         
-                        /* Ray direction into scene from camera through sample */
-                        Vector dir = cx * ((x + (sx + 0.5 + dx) / 2.0) / width - 0.5) +
-                                     cy * ((y + (sy + 0.5 + dy) / 2.0) / height - 0.5) + 
-                                     camera.dir;
+                        /* Intersection with focal plane from camera center */
+                        Vector focal_point = camera.org +
+                                   (cx * ((x + (sx + 0.5 + dx) / 2.0) / width - 0.5) +
+                                   cy * ((y + (sy + 0.5 + dy) / 2.0) / height - 0.5) + 
+                                   camera.dir * image_distance) * focal_distance;   //focal "plane" is actually curved                       
                         
-                        /* Extend camera ray to start inside box */
-                        Vector start = camera.org + dir * 130.0;
+                        /* Stratified camera lens sampling, using a concentric map */
+                        for(int i = 0; i < lens_samples; i++)
+                        {
+                            for(int j = 0; j < lens_samples; j++)
+                            { 
+                                const double lsx = (drand48()+i)/lens_samples - 0.5;
+                                const double lsy = (drand48()+j)/lens_samples - 0.5;
+                                double r, phi;
+                                if(lsx > lsy && lsx > -lsy) {
+                                    r = lsx;
+                                    phi = lsy/lsx * M_PI_4;
+                                }
+                                else if(lsx > lsy && lsx < -lsy) {
+                                    r = -lsy;
+                                    if (lsy == 0)
+                                        phi = 0;
+                                    else
+                                        phi = (6 - lsx/lsy) * M_PI_4;
+                                }
+                                else if(lsx < lsy && lsx > -lsy) {
+                                    r = lsy;
+                                    phi = (2 - lsx/lsy) * M_PI_4;
+                                }
+                                else {
+                                    r = -lsx;
+                                    phi = (4 + lsy/lsx) * M_PI_4;
+                                }
+                                //lens is slightly elliptical to match image aspect ratio (use [cx/cy].Normalized() for a circular lens)
+                                Vector offset = r * cos(phi) * cx + r * sin(phi) * cy;
+                                offset = offset * aperture;                        
+            
+                                Vector start = camera.org + offset;
+                                Vector dir = focal_point - start;
+                                dir = dir.Normalized();
+                                start = start + dir * ((camera.org.z-169)/abs(dir.z)); // Extend camera ray to start inside box (camera positioned at z~300, front wall at z~170)
 
-                        dir = dir.Normalized();
-
-                        /* Accumulate radiance */
-                        accumulated_radiance = accumulated_radiance + 
-                            Radiance( Ray(start, dir), 0, 1) / samples;
+                                /* Accumulate radiance */
+                                accumulated_radiance = accumulated_radiance + 
+                                    Radiance( Ray(start, dir), 0, 1) / samples / (lens_samples*lens_samples);
+                            }
+                        }
                     } 
                     
                     accumulated_radiance = accumulated_radiance.clamp() * 0.25;
