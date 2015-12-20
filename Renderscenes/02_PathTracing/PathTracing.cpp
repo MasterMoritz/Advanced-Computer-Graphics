@@ -28,6 +28,12 @@
 #include <cstdlib> 
 #include <iostream>
 #include <fstream>
+#ifdef _WIN32
+#include "drand48.h"
+#define M_PI 3.14159265358979323846
+#define M_1_PI   0.31830988618379067154
+#endif
+
 
 using namespace std;
 
@@ -181,7 +187,7 @@ struct Image
 | specular (mirror reflection) or transparent (refraction/reflection)
 | (DIFFuse, SPECular, REFRactive)
 ------------------------------------------------------------------*/
-enum Refl_t { DIFF, SPEC, REFR }; 
+enum Refl_t { DIFF, SPEC, REFR, GLOSSY, TRANS }; 
 
 struct Sphere 
 {
@@ -239,6 +245,7 @@ Sphere spheres[] =
     Sphere( 1e5, Vector(      50,-1e5 +81.6,      81.6),  Vector(), Vector(.75,.75,.75), DIFF), /* Ceiling */
 
     Sphere(16.5, Vector(27, 16.5, 47), Vector(), Vector(1,1,1)*.999,  SPEC), /* Mirror sphere */
+    Sphere(10.5, Vector(50, 16.5, 105), Vector(), Vector(1,1,1)*.999,  GLOSSY), /* Glossy sphere */
     Sphere(16.5, Vector(73, 16.5, 78), Vector(), Vector(1,1,1)*.999,  REFR), /* Glas sphere */
 
     Sphere( 1.5, Vector(50, 81.6-16.5, 81.6), Vector(4,4,4)*100, Vector(), DIFF), /* Light */
@@ -389,6 +396,15 @@ Color Radiance(const Ray &ray, int depth, int E)
         return obj.emission * E + e + col.MultComponents(Radiance(Ray(hitpoint,d), depth, 0));
     } 
     else if (obj.refl == SPEC) 
+    {  
+        /* Return light emission mirror reflection (via recursive call using perfect
+           reflection vector) */
+        return obj.emission + 
+            col.MultComponents(Radiance(Ray(hitpoint, ray.dir - normal * 2 * normal.Dot(ray.dir)),
+                               depth, 1));
+    }
+	//TODO glossy
+    else if (obj.refl == GLOSSY) 
     {  
         /* Return light emission mirror reflection (via recursive call using perfect
            reflection vector) */
