@@ -29,3 +29,13 @@ ___
 + executing radiosity will give 2 output images
 ___
 
+## 02_PathTracing
+
+### render scene :
+
++ make
++ ./PathTracing [samples per subpixel|int] [(sqrt of) samples on lens|int] [focal distance|cm] [aperture|f-stops]
++ e.g.
+  + ./PathTracing 40
+  + ./PathTracing 20 10
+  + ./PathTracing 1 1 248.6 2.8
