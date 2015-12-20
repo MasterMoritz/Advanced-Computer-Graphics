@@ -27,6 +27,7 @@ ___
 
 + make
 + executing radiosity will give 2 output images
+
 ___
 
 ## 02_PathTracing
