@@ -34,7 +34,6 @@
 #define M_1_PI   0.31830988618379067154
 #endif
 
-
 using namespace std;
 
 
