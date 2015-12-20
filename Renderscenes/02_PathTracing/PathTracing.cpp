@@ -493,7 +493,7 @@ int main(int argc, char *argv[])
     int lens_samples = 1;
     double focal_distance = 248.6;  //focused on metal sphere (217.6 would focus on glass sphere)   
     double image_distance = 1;  //for our virtual camera the image sensor is 1 unit away from the lens   
-    double fstops = .2; // smaller f-stop -> shallower depth of field (here: ridiculisly low value to demonstrate depth of field)
+    double fstops = .2; // smaller f-stop -> shallower depth of field (here: ridiculously low value to demonstrate depth of field)
 
     /* User input */
     if(argc >= 2)
@@ -509,7 +509,7 @@ int main(int argc, char *argv[])
     double focal_length = 1 / (1/image_distance + 1/focal_distance);    //focus length for given distances of focal & image plane to the lens
      /* Adapt behaviour of fstops to those of a real camera with focal length of 100mm (where distance to image sensor is not exactly 10mm but dependent on the focal distance) */
     fstops *= focal_length / 10;
-    double aperture = focal_length/fstops;
+    double aperture = 0/*focal_length/fstops*/ /*temporarily disabled depth of field for development convenience*/;
      
     /* Set camera origin and viewing direction (negative z direction) */
     Ray camera(Vector(50.0, 52.0, 170 + 125.6), Vector(0.0, -0.042612, -1.0).Normalized());
