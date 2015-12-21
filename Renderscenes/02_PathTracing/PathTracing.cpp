@@ -364,7 +364,7 @@ bool Intersect(const Ray &ray, double &t, int &id)
 /*
  * return a random vector around axis
  */
-Vector getSample(Vector axis, int n) {
+Vector getSample(Vector axis, double n) {
 	double e1 = drand48();
 	double e2 = drand48();
 	
@@ -372,7 +372,7 @@ Vector getSample(Vector axis, int n) {
 	Vector w = axis; 
 	Vector u;
 	Vector r (drand48(), drand48(), drand48());
-	while (fabs(r.Dot(w)) < 0.00001) {
+	while (fabs(r.Dot(w)) < 0.000000001) {
 		r = Vector(drand48(), drand48(), drand48());
 	}
 	u = (r.Cross(w)).Normalized();
@@ -382,9 +382,9 @@ Vector getSample(Vector axis, int n) {
 	/* calc vector */
 	double phi = 2.0 * M_PI * e1;
 	//double theta = acos(pow(e2, 1/(n+1)));
-	double h = pow(e2, 1/(n+1));
+	double cosT = pow(e2, 1/(n+1));
 
-	double z = h + (1 - h) * e2;
+	double z = cosT + (1 - cosT) * n;
 	double sinT = sqrt(1 - z * z);
 	double x = cos(phi) * sinT;
 	double y = sin(phi) * sinT;
@@ -534,9 +534,9 @@ Color Radiance(const Ray &ray, int depth, int E)
 
         /* Return light emission mirror reflection (via recursive call using perfect
            reflection vector) */
-		double glossiness_factor = 0.5; // <1.0 = glossy, >=1.0 = mirror
+		double glossiness_factor = 0.2; // <1.0 = glossy, >=1.0 = mirror
 		if (depth < 3) {
-			int num_samples = 8;
+			int num_samples = 4;
 			Color avrg(0.0,0.0,0.0);
 			for (int i = 0; i < num_samples; i++) {
 				Color rad (Radiance(Ray(hitpoint, getSample(perfectReflectionDirectionN, glossiness_factor)), depth, 0));
@@ -603,25 +603,40 @@ Color Radiance(const Ray &ray, int depth, int E)
 
     if (depth < 3) {   /* Initially both reflection and transmission */
 		if (obj->refl == TRANS) {
-			int num_samples = 8;
+			int num_samples = 4;
 			Color avrg(0.0,0.0,0.0);
 			for (int i = 0; i < num_samples; i++) {
-				Color rad (Radiance(Ray(hitpoint, getSample(tdir, 0.5)), depth, 1));
+				Color rad (Radiance(Ray(hitpoint, getSample(tdir, 0.5)), depth, 1)*Tr);
 				avrg.x += rad.x;
 				avrg.y += rad.y;
 				avrg.z += rad.z;
 			}
-			avrg = avrg/num_samples*Tr;
+			avrg = avrg/num_samples;
 			return obj->emission + col.MultComponents(Radiance(reflRay, depth, 1) * Re + avrg);
 		}
         return obj->emission + col.MultComponents(Radiance(reflRay, depth, 1) * Re + 
 		                                          Radiance(Ray(hitpoint, tdir), depth, 1) * Tr);
 	}
-    else             /* Russian Roulette */ 
+    else {        /* Russian Roulette */ 
         if (drand48() < P)
             return obj->emission + col.MultComponents(Radiance(reflRay, depth, 1) * RP);
-        else
-            return obj->emission + col.MultComponents(Radiance(Ray(hitpoint,tdir), depth, 1) * TP);
+        else {
+			if (obj->refl == TRANS) {
+				int num_samples = 4;
+				Color avrg(0.0,0.0,0.0);
+				for (int i = 0; i < num_samples; i++) {
+					Color rad (Radiance(Ray(hitpoint, getSample(tdir, 0.5)), depth, 1)*TP);
+					avrg.x += rad.x;
+					avrg.y += rad.y;
+					avrg.z += rad.z;
+				}
+				avrg = avrg/num_samples;
+				return obj->emission + col.MultComponents(avrg);
+			}
+			return obj->emission + col.MultComponents(Radiance(Ray(hitpoint,tdir), depth, 1) * TP);
+		}
+	}
+            
 }
 
 
