@@ -192,11 +192,14 @@ enum Refl_t { DIFF, SPEC, REFR, GLOSSY, TRANS };
 struct Geom 
 {
     Geom(Vector position_, Vector emission_, 
-           Vector color_, Refl_t refl_): position(position_), emission(emission_), 
-           color(color_), refl(refl_) {}
+           Vector color_, Refl_t refl_, double glossy_factor, double trans_factor): position(position_), emission(emission_), 
+           color(color_), refl(refl_), glossiness_factor(glossy_factor), translucency_factor(trans_factor) {}
     Vector position;
     Color emission, color;      
     Refl_t refl;
+    double glossiness_factor; // between 0.0 (very glossy) and 1.0 (mirror)
+	double translucency_factor; // between 0.0 (translucent) and 1.0 (not translucent)
+
     virtual Vector getNormalAtPoint(Vector point) const = 0;
     virtual double Intersect(const Ray &ray) const = 0;
 };
@@ -206,8 +209,8 @@ struct Sphere : Geom
     double radius;
     
     Sphere(double radius_, Vector position_, Vector emission_, 
-           Vector color_, Refl_t refl_): Geom(position_, emission_, color_, refl_),
-           radius(radius_) {}
+           Vector color_, Refl_t refl_, double glossy_factor = 0.5, double trans_factor = 0.5): 
+		   Geom(position_, emission_, color_, refl_, glossy_factor, trans_factor), radius(radius_) {}
 
     Vector getNormalAtPoint(Vector p) const {
         return (p - position).Normalized();
@@ -246,7 +249,7 @@ struct Triangle : Geom
     Vector normal;
 
 	//create a triangle, diagonal edge is calculated from 2 given edges
-	Triangle(Vector p0_, Vector a_, Vector b_, Vector normal_, Color emission_, Color color_, Refl_t refl_):
+	Triangle(Vector p0_, Vector a_, Vector b_, Vector normal_, Color emission_, Color color_, Refl_t refl_, double glossy_factor = 0.5, double trans_factor = 0.5):
     Geom((p0 + (p0+edge_a) + (p0+edge_b)) / 3, emission_, color_, refl_), p0(p0_), edge_a(a_), edge_b(b_), normal(normal_)
     {
 		edge_c = edge_a - edge_b; //diagonal edge from point b to point a
@@ -318,7 +321,8 @@ Sphere spheres[] =
     Sphere( 1e5, Vector(      50,-1e5 +81.6,      81.6),  Vector(), Vector(.75,.75,.75), DIFF), /* Ceiling */
 
     Sphere(16.5, Vector(27, 16.5, 47), Vector(), Vector(1,1,1)*.999,  SPEC), /* Mirror sphere */
-    Sphere(10.5, Vector(50, 16.5, 105), Vector(), Vector(1,1,1)*.999,  GLOSSY), /* Glossy sphere */
+    Sphere(10.5, Vector(50, 16.5, 105), Vector(), Vector(1,1,1)*.999,  GLOSSY, 0.8), /* Glossy sphere */
+	Sphere(10.5, Vector(10.5, 50.0, 105), Vector(), Vector(1,1,1)*.999,  TRANS, 1, 0.8), /* Transluscent sphere */
     Sphere(16.5, Vector(73, 16.5, 78), Vector(), Vector(1,1,1)*.999,  REFR), /* Glass sphere */
 
     Sphere( 1.5, Vector(50, 81.6-16.5, 81.6), Vector(4,4,4)*100, Vector(), DIFF), /* Light */
@@ -404,6 +408,46 @@ bool Intersect(const Ray &ray, double &t, int &id)
     return t < 1e20;
 }
 
+/*
+ * return a random vector around axis
+ *
+ * n (0.0 to 1.0) determines how close the vector is to the axis vector (1.0 is the same)
+ */
+Vector getSample(Vector axis, double n) {
+	double e1 = drand48();
+	double e2 = drand48();
+	
+	// Set up local orthogonal coordinate system u,v,w on surface
+	Vector w = axis; 
+	Vector u;
+	Vector r (drand48(), drand48(), drand48());
+	while (fabs(r.Dot(w)) < 0.000000001) {
+		r = Vector(drand48(), drand48(), drand48());
+	}
+	u = (r.Cross(w)).Normalized();
+
+	Vector v = w.Cross(u);
+		
+	// calc sample vector
+	double phi = 2.0 * M_PI * e1;
+	double cosT = pow(e2, 1/(n+1));
+
+	double z = cosT + (1 - cosT) * n; // determine angle spread depended on n
+	double sinT = sqrt(1 - z * z);
+	double x = cos(phi) * sinT;
+	double y = sin(phi) * sinT;
+
+	Vector sample (x,y,z);
+
+	//translate sample into correct space
+	Vector utrans(u.x, v.x, w.x);
+	Vector vtrans(u.y, v.y, w.y);
+	Vector wtrans(u.z, v.z, w.z); 
+	Vector sampleDirection(utrans.x * sample.x + utrans.y * sample.y + utrans.z * sample.z,
+	                       vtrans.x * sample.x + vtrans.y * sample.y + vtrans.z * sample.z,
+	                       wtrans.x * sample.x + wtrans.y * sample.y + wtrans.z * sample.z);
+	return sampleDirection;
+}
 
 /******************************************************************
 * Recursive path tracing for computing radiance via Monte-Carlo
@@ -417,6 +461,8 @@ bool Intersect(const Ray &ray, double &t, int &id)
 * for transparent objects, Schlick's approximation is employed;
 * for first 3 bounces obtain reflected and refracted component,
 * afterwards one of the two is chosen randomly   
+*
+* samples should be kept low to avoid segfault (stack full, too much recursions)
 *******************************************************************/
 Color Radiance(const Ray &ray, int depth, int E)
 {
@@ -533,14 +579,29 @@ Color Radiance(const Ray &ray, int depth, int E)
             col.MultComponents(Radiance(Ray(hitpoint, ray.dir - normal * 2 * normal.Dot(ray.dir)),
                                depth, 1));
     }
-	//TODO glossy
-    else if (obj->refl == GLOSSY) 
-    {  
-        return obj->emission + col.MultComponents(Radiance(Ray(hitpoint, ray.dir - normal * 2 * normal.Dot(ray.dir)),
-                                   depth, 1));
+	else if (obj->refl == GLOSSY) 
+    { 
+		Vector perfectReflectionDirectionN = (ray.dir - normal * 2 * normal.Dot(ray.dir)).Normalized();
+
+        // shoot secondary rays, perturbed around perfect reflection ray
+		// make sure that stack has enough space for recursions by limiting depth
+		if (depth < 3) {
+			int num_samples = 4;
+			Color avrg(0.0,0.0,0.0);
+			for (int i = 0; i < num_samples; i++) {
+				Color rad (Radiance(Ray(hitpoint, getSample(perfectReflectionDirectionN, obj->glossiness_factor)), depth, 1));
+				avrg.x += rad.x;
+				avrg.y += rad.y;
+				avrg.z += rad.z;
+			}
+			avrg = avrg/num_samples;
+			return obj->emission + col.MultComponents(avrg);
+		}
+		//could shoot more rays, but the result is not worth the additional rendering time
+		return obj->emission;
     }
 
-    /* Otherwise object transparent, i.e. assumed dielectric glass material */
+    /* Otherwise object transparent or translucent, i.e. assumed dielectric glass material */
     Ray reflRay (hitpoint, ray.dir - normal * 2 * normal.Dot(ray.dir));  /* Prefect reflection */  
     bool into = normal.Dot(nl) > 0;       /* Bool for checking if ray from outside going in */
     double nc = 1;                        /* Index of refraction of air (approximately) */  
@@ -556,7 +617,7 @@ Color Radiance(const Ray &ray, int depth, int E)
     double cos2t = 1 - nnt * nnt * (1 - ddn*ddn);
 
     /* Check for total internal reflection, if so only reflect */
-    if (cos2t < 0)  
+    if (cos2t < 0)
         return obj->emission + col.MultComponents( Radiance(reflRay, depth, 1));
 
     /* Otherwise reflection and/or refraction occurs */
@@ -589,14 +650,47 @@ Color Radiance(const Ray &ray, int depth, int E)
     double RP = Re / P;         /* Scaling factors for unbiased estimator */
     double TP = Tr / (1 - P);
 
-    if (depth < 3)   /* Initially both reflection and transmission */
+	double translucency = obj->translucency_factor;
+    if (depth < 3) {   /* Initially both reflection and transmission */
+		//shoot multiple rays perturbed around refraction ray if object is translucent
+		if (obj->refl == TRANS) {
+			int num_samples = 2;
+			Color avrg(0.0,0.0,0.0);
+			for (int i = 0; i < num_samples; i++) {
+				Color rad (Radiance(Ray(hitpoint, getSample(tdir, translucency)), depth, 1)*Tr);
+				avrg.x += rad.x;
+				avrg.y += rad.y;
+				avrg.z += rad.z;
+			}
+			avrg = avrg/num_samples;
+			return obj->emission + col.MultComponents(Radiance(reflRay, depth, 1) * Re + avrg);
+		}
         return obj->emission + col.MultComponents(Radiance(reflRay, depth, 1) * Re + 
-                                                 Radiance(Ray(hitpoint, tdir), depth, 1) * Tr);
-    else             /* Russian Roulette */ 
-        if (drand48() < P)
+		                                          Radiance(Ray(hitpoint, tdir), depth, 1) * Tr);
+	}
+	//either shoot reflective or transmissive ray, decided by russian roulette
+    else {
+        if (drand48() < P) {
             return obj->emission + col.MultComponents(Radiance(reflRay, depth, 1) * RP);
-        else
-            return obj->emission + col.MultComponents(Radiance(Ray(hitpoint,tdir), depth, 1) * TP);
+		}
+        else {
+			//shoot multiple rays perturbed around refraction ray if object is translucent
+			if (obj->refl == TRANS) {
+				int num_samples = 2;
+				Color avrg(0.0,0.0,0.0);
+				for (int i = 0; i < num_samples; i++) {
+					Color rad (Radiance(Ray(hitpoint, getSample(tdir, translucency)), depth, 1)*TP);
+					avrg.x += rad.x;
+					avrg.y += rad.y;
+					avrg.z += rad.z;
+				}
+				avrg = avrg/num_samples;
+				return obj->emission + col.MultComponents(avrg);
+			}
+			return obj->emission + col.MultComponents(Radiance(Ray(hitpoint,tdir), depth, 1) * TP);
+		}
+	}
+            
 }
 
 
@@ -616,7 +710,7 @@ int main(int argc, char *argv[])
     /* Default values */
     int width = 1024;
     int height = 768;
-    int samples = 1;
+    int samples = 4;
     int lens_samples = 1;
     double focal_distance = 248.6;  //focused on metal sphere (217.6 would focus on glass sphere)   
     double image_distance = 1;  //for our virtual camera the image sensor is 1 unit away from the lens   

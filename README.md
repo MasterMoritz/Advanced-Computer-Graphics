@@ -31,11 +31,12 @@ ___
 ___
 
 ## 02_PathTracing
+![alt tag](https://raw.githubusercontent.com/MasterMoritz/Advanced-Computer-Graphics/master/Images/dahoe.jpg)
 
 ### render scene :
 
 + make
-+ ./PathTracing [samples per subpixel|int] [(sqrt of) samples on lens|int] [focal distance|cm] [aperture|f-stops]
++ ./PathTracing [samples per subpixel|int] [samples on lens|int] [focal distance|cm] [aperture|f-stops]
 + e.g.
   + ./PathTracing 40
   + ./PathTracing 20 10
