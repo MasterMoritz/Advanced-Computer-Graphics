@@ -568,7 +568,7 @@ Color Radiance(const Ray &ray, int depth, int E)
     double cos2t = 1 - nnt * nnt * (1 - ddn*ddn);
 
     /* Check for total internal reflection, if so only reflect */
-    if (cos2t < 0)  
+    if (cos2t < 0)
         return obj->emission + col.MultComponents( Radiance(reflRay, depth, 1));
 
     /* Otherwise reflection and/or refraction occurs */
@@ -601,9 +601,22 @@ Color Radiance(const Ray &ray, int depth, int E)
     double RP = Re / P;         /* Scaling factors for unbiased estimator */
     double TP = Tr / (1 - P);
 
-    if (depth < 3)   /* Initially both reflection and transmission */
+    if (depth < 3) {   /* Initially both reflection and transmission */
+		if (obj->refl == TRANS) {
+			int num_samples = 8;
+			Color avrg(0.0,0.0,0.0);
+			for (int i = 0; i < num_samples; i++) {
+				Color rad (Radiance(Ray(hitpoint, getSample(tdir, 0.5)), depth, 1));
+				avrg.x += rad.x;
+				avrg.y += rad.y;
+				avrg.z += rad.z;
+			}
+			avrg = avrg/num_samples*Tr;
+			return obj->emission + col.MultComponents(Radiance(reflRay, depth, 1) * Re + avrg);
+		}
         return obj->emission + col.MultComponents(Radiance(reflRay, depth, 1) * Re + 
-                                                 Radiance(Ray(hitpoint, tdir), depth, 1) * Tr);
+		                                          Radiance(Ray(hitpoint, tdir), depth, 1) * Tr);
+	}
     else             /* Russian Roulette */ 
         if (drand48() < P)
             return obj->emission + col.MultComponents(Radiance(reflRay, depth, 1) * RP);
