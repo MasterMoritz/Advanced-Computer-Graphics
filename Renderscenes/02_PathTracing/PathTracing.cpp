@@ -11,6 +11,13 @@
 * The code is largely based on the software smallpt by Kevin Beason,
 * released under the MIT License.
 *
+*
+* Added support for:
+*  - Glossy and Translucent materials
+*  - Depth of Field
+*  - Triangle Meshes
+* by Andreas Moritz and Philipp Wirtenberger
+*
 * Advanced Computer Graphics Proseminar WS 2015
 * 
 * Interactive Graphics and Simulation Group
@@ -321,9 +328,8 @@ Sphere spheres[] =
     Sphere( 1e5, Vector(      50,-1e5 +81.6,      81.6),  Vector(), Vector(.75,.75,.75), DIFF), /* Ceiling */
 
     Sphere(16.5, Vector(27, 16.5, 47), Vector(), Vector(1,1,1)*.999,  SPEC), /* Mirror sphere */
-    //temporarily commented out to keep example scene simple    
-    //Sphere(10.5, Vector(50, 16.5, 105), Vector(), Vector(1,1,1)*.999,  GLOSSY, 0.8), /* Glossy sphere */
-	//Sphere(10.5, Vector(10.5, 50.0, 105), Vector(), Vector(1,1,1)*.999,  TRANS, 1, 0.8), /* Transluscent sphere */
+    Sphere(10.5, Vector(50, 16.5, 105), Vector(), Vector(1,1,1)*.999,  GLOSSY, 0.8), /* Glossy sphere */
+	Sphere(10.5, Vector(10.5, 50.0, 105), Vector(), Vector(1,1,1)*.999,  TRANS, 1, 0.8), /* Transluscent sphere */
     Sphere(16.5, Vector(73, 16.5, 78), Vector(), Vector(1,1,1)*.999,  REFR), /* Glass sphere */
 
     Sphere( 1.5, Vector(50, 81.6-16.5, 81.6), Vector(4,4,4)*100, Vector(), DIFF), /* Light */
@@ -712,11 +718,11 @@ int main(int argc, char *argv[])
     /* Default values */
     int width = 1024;
     int height = 768;
-    int samples = 1;
+    int samples = 2;
     int lens_samples = 1;
     double focal_distance = 248.6;  //focused on metal sphere (217.6 would focus on glass sphere)   
     double image_distance = 1;  //for our virtual camera the image sensor is 1 unit away from the lens   
-    double fstops = .2; // smaller f-stop -> shallower depth of field (here: ridiculously low value to demonstrate depth of field)
+    double fstops = .6; // smaller f-stop -> shallower depth of field
 
     /* User input */
     if(argc >= 2)
@@ -732,7 +738,7 @@ int main(int argc, char *argv[])
     double focal_length = 1 / (1/image_distance + 1/focal_distance);    //focus length for given distances of focal & image plane to the lens
      /* Adapt behaviour of fstops to those of a real camera with focal length of 100mm (where distance to image sensor is not exactly 10mm but dependent on the focal distance) */
     fstops *= focal_length / 10;
-    double aperture = focal_length/fstops;
+    double aperture = focal_length/fstops; //set aperture to 0 to turn off depth of field
      
     /* Set camera origin and viewing direction (negative z direction) */
     Ray camera(Vector(50.0, 52.0, 170 + 125.6), Vector(0.0, -0.042612, -1.0).Normalized());
