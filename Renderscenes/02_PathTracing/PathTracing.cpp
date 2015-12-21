@@ -250,7 +250,7 @@ struct Triangle : Geom
 
 	//create a triangle, diagonal edge is calculated from 2 given edges
 	Triangle(Vector p0_, Vector a_, Vector b_, Vector normal_, Color emission_, Color color_, Refl_t refl_, double glossy_factor = 0.5, double trans_factor = 0.5):
-    Geom((p0 + (p0+edge_a) + (p0+edge_b)) / 3, emission_, color_, refl_), p0(p0_), edge_a(a_), edge_b(b_), normal(normal_)
+    Geom((p0 + (p0+edge_a) + (p0+edge_b)) / 3, emission_, color_, refl_, glossy_factor, trans_factor), p0(p0_), edge_a(a_), edge_b(b_), normal(normal_)
     {
 		edge_c = edge_a - edge_b; //diagonal edge from point b to point a
 		/*normal = edge_a.Cross(edge_b);
