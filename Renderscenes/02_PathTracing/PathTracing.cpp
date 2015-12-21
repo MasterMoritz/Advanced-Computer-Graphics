@@ -366,12 +366,14 @@ bool Intersect(const Ray &ray, double &t, int &id)
 
 /*
  * return a random vector around axis
+ *
+ * n (0.0 to 1.0) determines how close the vector is to the axis vector (1.0 is the same)
  */
 Vector getSample(Vector axis, double n) {
 	double e1 = drand48();
 	double e2 = drand48();
 	
-	/* Set up local orthogonal coordinate system u,v,w on surface */
+	// Set up local orthogonal coordinate system u,v,w on surface
 	Vector w = axis; 
 	Vector u;
 	Vector r (drand48(), drand48(), drand48());
@@ -382,17 +384,18 @@ Vector getSample(Vector axis, double n) {
 
 	Vector v = w.Cross(u);
 		
-	/* calc vector */
+	// calc sample vector
 	double phi = 2.0 * M_PI * e1;
-	//double theta = acos(pow(e2, 1/(n+1)));
 	double cosT = pow(e2, 1/(n+1));
 
-	double z = cosT + (1 - cosT) * n;
+	double z = cosT + (1 - cosT) * n; // determine angle spread depended on n
 	double sinT = sqrt(1 - z * z);
 	double x = cos(phi) * sinT;
 	double y = sin(phi) * sinT;
 
 	Vector sample (x,y,z);
+
+	//translate sample into correct space
 	Vector utrans(u.x, v.x, w.x);
 	Vector vtrans(u.y, v.y, w.y);
 	Vector wtrans(u.z, v.z, w.z); 
@@ -414,6 +417,8 @@ Vector getSample(Vector axis, double n) {
 * for transparent objects, Schlick's approximation is employed;
 * for first 3 bounces obtain reflected and refracted component,
 * afterwards one of the two is chosen randomly   
+*
+* samples should be kept low to avoid segfault (stack full, too much recursions)
 *******************************************************************/
 Color Radiance(const Ray &ray, int depth, int E)
 {
@@ -534,8 +539,8 @@ Color Radiance(const Ray &ray, int depth, int E)
     { 
 		Vector perfectReflectionDirectionN = (ray.dir - normal * 2 * normal.Dot(ray.dir)).Normalized();
 
-        /* Return light emission mirror reflection (via recursive call using perfect
-           reflection vector) */
+        // shoot secondary rays, perturbed around perfect reflection ray
+		// make sure that stack has enough space for recursions by limiting depth
 		if (depth < 3) {
 			int num_samples = 4;
 			Color avrg(0.0,0.0,0.0);
@@ -548,10 +553,11 @@ Color Radiance(const Ray &ray, int depth, int E)
 			avrg = avrg/num_samples;
 			return obj->emission + col.MultComponents(avrg);
 		}
+		//could shoot more rays, but the result is not worth the additional rendering time
 		return obj->emission;
     }
 
-    /* Otherwise object transparent, i.e. assumed dielectric glass material */
+    /* Otherwise object transparent or translucent, i.e. assumed dielectric glass material */
     Ray reflRay (hitpoint, ray.dir - normal * 2 * normal.Dot(ray.dir));  /* Prefect reflection */  
     bool into = normal.Dot(nl) > 0;       /* Bool for checking if ray from outside going in */
     double nc = 1;                        /* Index of refraction of air (approximately) */  
@@ -602,8 +608,9 @@ Color Radiance(const Ray &ray, int depth, int E)
 
 	double translucency = obj->translucency_factor;
     if (depth < 3) {   /* Initially both reflection and transmission */
+		//shoot multiple rays perturbed around refraction ray if object is translucent
 		if (obj->refl == TRANS) {
-			int num_samples = 4;
+			int num_samples = 2;
 			Color avrg(0.0,0.0,0.0);
 			for (int i = 0; i < num_samples; i++) {
 				Color rad (Radiance(Ray(hitpoint, getSample(tdir, translucency)), depth, 1)*Tr);
@@ -617,10 +624,13 @@ Color Radiance(const Ray &ray, int depth, int E)
         return obj->emission + col.MultComponents(Radiance(reflRay, depth, 1) * Re + 
 		                                          Radiance(Ray(hitpoint, tdir), depth, 1) * Tr);
 	}
-    else {        /* Russian Roulette */ 
-        if (drand48() < P)
+	//either shoot reflective or transmissive ray, decided by russian roulette
+    else {
+        if (drand48() < P) {
             return obj->emission + col.MultComponents(Radiance(reflRay, depth, 1) * RP);
+		}
         else {
+			//shoot multiple rays perturbed around refraction ray if object is translucent
 			if (obj->refl == TRANS) {
 				int num_samples = 2;
 				Color avrg(0.0,0.0,0.0);
