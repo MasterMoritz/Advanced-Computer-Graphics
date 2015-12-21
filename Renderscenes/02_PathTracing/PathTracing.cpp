@@ -193,11 +193,14 @@ enum Refl_t { DIFF, SPEC, REFR, GLOSSY, TRANS };
 struct Geom 
 {
     Geom(Vector position_, Vector emission_, 
-           Vector color_, Refl_t refl_): position(position_), emission(emission_), 
-           color(color_), refl(refl_) {}
+           Vector color_, Refl_t refl_, double glossy_factor, double trans_factor): position(position_), emission(emission_), 
+           color(color_), refl(refl_), glossiness_factor(glossy_factor), translucency_factor(trans_factor) {}
     Vector position;
     Color emission, color;      
     Refl_t refl;
+	double glossiness_factor; // between 0.0 (very glossy) and 1.0 (mirror)
+	double translucency_factor; // between 0.0 (translucent) and 1.0 (not translucent)
+	
     virtual double Intersect(const Ray &ray) const = 0;
 };
 
@@ -206,8 +209,8 @@ struct Sphere : Geom
     double radius;
     
     Sphere(double radius_, Vector position_, Vector emission_, 
-           Vector color_, Refl_t refl_): Geom(position_, emission_, color_, refl_),
-           radius(radius_) {}
+           Vector color_, Refl_t refl_, double glossy_factor = 0.5, double trans_factor = 0.5): 
+		   Geom(position_, emission_, color_, refl_, glossy_factor, trans_factor), radius(radius_) {}
 
     double Intersect(const Ray &ray) const 
     { 
@@ -246,8 +249,8 @@ struct Triangle : Geom
 	Triangle(const Vector p0_,
 		const Vector &a_, const Vector &b_,
         Vector position_,
-		const Color &emission_, const Color &color_, Refl_t refl_) :
-		Geom(position_, emission_, color_, refl_), p0(p0_), edge_a(a_), edge_b(b_)
+		const Color &emission_, const Color &color_, Refl_t refl_, double glossy_factor = 0.5, double trans_factor = 0.5) :
+		Geom(position_, emission_, color_, refl_, glossy_factor, trans_factor), p0(p0_), edge_a(a_), edge_b(b_)
     {
 		edge_c = edge_a - edge_b; //diagonal edge from point b to point a
 		normal = edge_a.Cross(edge_b);
@@ -317,8 +320,8 @@ Sphere spheres[] =
     Sphere( 1e5, Vector(      50,-1e5 +81.6,      81.6),  Vector(), Vector(.75,.75,.75), DIFF), /* Ceiling */
 
     Sphere(16.5, Vector(27, 16.5, 47), Vector(), Vector(1,1,1)*.999,  SPEC), /* Mirror sphere */
-    Sphere(10.5, Vector(50, 16.5, 105), Vector(), Vector(1,1,1)*.999,  GLOSSY), /* Glossy sphere */
-	Sphere(10.5, Vector(10.5, 50.0, 105), Vector(), Vector(1,1,1)*.999,  TRANS), /* Transluscent sphere */
+    Sphere(10.5, Vector(50, 16.5, 105), Vector(), Vector(1,1,1)*.999,  GLOSSY, 0.8), /* Glossy sphere */
+	Sphere(10.5, Vector(10.5, 50.0, 105), Vector(), Vector(1,1,1)*.999,  TRANS, 1, 0.8), /* Transluscent sphere */
     Sphere(16.5, Vector(73, 16.5, 78), Vector(), Vector(1,1,1)*.999,  REFR), /* Glas sphere */
 
     Sphere( 1.5, Vector(50, 81.6-16.5, 81.6), Vector(4,4,4)*100, Vector(), DIFF), /* Light */
@@ -529,17 +532,15 @@ Color Radiance(const Ray &ray, int depth, int E)
     }
 	else if (obj->refl == GLOSSY) 
     { 
-		Vector perfectReflectionDirection = ray.dir - normal * 2 * normal.Dot(ray.dir);
-		Vector perfectReflectionDirectionN = perfectReflectionDirection.Normalized();
+		Vector perfectReflectionDirectionN = (ray.dir - normal * 2 * normal.Dot(ray.dir)).Normalized();
 
         /* Return light emission mirror reflection (via recursive call using perfect
            reflection vector) */
-		double glossiness_factor = 0.2; // <1.0 = glossy, >=1.0 = mirror
 		if (depth < 3) {
 			int num_samples = 4;
 			Color avrg(0.0,0.0,0.0);
 			for (int i = 0; i < num_samples; i++) {
-				Color rad (Radiance(Ray(hitpoint, getSample(perfectReflectionDirectionN, glossiness_factor)), depth, 0));
+				Color rad (Radiance(Ray(hitpoint, getSample(perfectReflectionDirectionN, obj->glossiness_factor)), depth, 1));
 				avrg.x += rad.x;
 				avrg.y += rad.y;
 				avrg.z += rad.z;
@@ -547,8 +548,6 @@ Color Radiance(const Ray &ray, int depth, int E)
 			avrg = avrg/num_samples;
 			return obj->emission + col.MultComponents(avrg);
 		}
-		
-		//return obj.emission + col.MultComponents(Radiance(Ray(hitpoint, perfectReflectionDirection), depth, 1)); //this takes way too long
 		return obj->emission;
     }
 
@@ -601,12 +600,13 @@ Color Radiance(const Ray &ray, int depth, int E)
     double RP = Re / P;         /* Scaling factors for unbiased estimator */
     double TP = Tr / (1 - P);
 
+	double translucency = obj->translucency_factor;
     if (depth < 3) {   /* Initially both reflection and transmission */
 		if (obj->refl == TRANS) {
 			int num_samples = 4;
 			Color avrg(0.0,0.0,0.0);
 			for (int i = 0; i < num_samples; i++) {
-				Color rad (Radiance(Ray(hitpoint, getSample(tdir, 0.5)), depth, 1)*Tr);
+				Color rad (Radiance(Ray(hitpoint, getSample(tdir, translucency)), depth, 1)*Tr);
 				avrg.x += rad.x;
 				avrg.y += rad.y;
 				avrg.z += rad.z;
@@ -622,10 +622,10 @@ Color Radiance(const Ray &ray, int depth, int E)
             return obj->emission + col.MultComponents(Radiance(reflRay, depth, 1) * RP);
         else {
 			if (obj->refl == TRANS) {
-				int num_samples = 4;
+				int num_samples = 2;
 				Color avrg(0.0,0.0,0.0);
 				for (int i = 0; i < num_samples; i++) {
-					Color rad (Radiance(Ray(hitpoint, getSample(tdir, 0.5)), depth, 1)*TP);
+					Color rad (Radiance(Ray(hitpoint, getSample(tdir, translucency)), depth, 1)*TP);
 					avrg.x += rad.x;
 					avrg.y += rad.y;
 					avrg.z += rad.z;
