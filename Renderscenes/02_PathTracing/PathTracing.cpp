@@ -37,7 +37,6 @@
 
 using namespace std;
 
-
 /*------------------------------------------------------------------
 | Struct for standard Vector operations in 3D 
 | (used for points, vectors, and colors)
@@ -198,6 +197,7 @@ struct Geom
     Vector position;
     Color emission, color;      
     Refl_t refl;
+    virtual Vector getNormalAtPoint(Vector point) const = 0;
     virtual double Intersect(const Ray &ray) const = 0;
 };
 
@@ -208,6 +208,10 @@ struct Sphere : Geom
     Sphere(double radius_, Vector position_, Vector emission_, 
            Vector color_, Refl_t refl_): Geom(position_, emission_, color_, refl_),
            radius(radius_) {}
+
+    Vector getNormalAtPoint(Vector p) const {
+        return (p - position).Normalized();
+    }
 
     double Intersect(const Ray &ray) const 
     { 
@@ -239,23 +243,20 @@ struct Triangle : Geom
 {
 	Vector p0; //origin               
 	Vector edge_a, edge_b, edge_c; //edges making up the triangle
-	Vector normal;
-	double a_len, b_len, c_len;    /* Edge lengths */
+    Vector normal;
 
 	//create a triangle, diagonal edge is calculated from 2 given edges
-	Triangle(const Vector p0_,
-		const Vector &a_, const Vector &b_,
-        Vector position_,
-		const Color &emission_, const Color &color_, Refl_t refl_) :
-		Geom(position_, emission_, color_, refl_), p0(p0_), edge_a(a_), edge_b(b_)
+	Triangle(Vector p0_, Vector a_, Vector b_, Vector normal_, Color emission_, Color color_, Refl_t refl_):
+    Geom((p0 + (p0+edge_a) + (p0+edge_b)) / 3, emission_, color_, refl_), p0(p0_), edge_a(a_), edge_b(b_), normal(normal_)
     {
 		edge_c = edge_a - edge_b; //diagonal edge from point b to point a
-		normal = edge_a.Cross(edge_b);
-		normal = normal.Normalized();
-		/*a_len = edge_a.Length();
-		b_len = edge_b.Length();
-		c_len = edge_c.Length();*/
+		/*normal = edge_a.Cross(edge_b);
+		normal = normal.Normalized();*/
 	}
+
+    Vector getNormalAtPoint(Vector p) const {
+        return normal;
+    }
 
 	/* Triangle-ray intersection 
 	 * Moeller-Trumbore approach
@@ -318,22 +319,65 @@ Sphere spheres[] =
 
     Sphere(16.5, Vector(27, 16.5, 47), Vector(), Vector(1,1,1)*.999,  SPEC), /* Mirror sphere */
     Sphere(10.5, Vector(50, 16.5, 105), Vector(), Vector(1,1,1)*.999,  GLOSSY), /* Glossy sphere */
-    Sphere(16.5, Vector(73, 16.5, 78), Vector(), Vector(1,1,1)*.999,  REFR), /* Glas sphere */
+    Sphere(16.5, Vector(73, 16.5, 78), Vector(), Vector(1,1,1)*.999,  REFR), /* Glass sphere */
 
     Sphere( 1.5, Vector(50, 81.6-16.5, 81.6), Vector(4,4,4)*100, Vector(), DIFF), /* Light */
 };
 
-Triangle triangles[] = {};
+vector<Triangle> triangles;
 
-Geom *geoms[sizeof(spheres)/sizeof(Sphere) + sizeof(triangles)/sizeof(Triangle)];
+/* Load the triangle geometry */
+void loadObjects() {
+    string inputfile = "pyramid_rotated.obj";
+    vector<tinyobj::shape_t> shapes;
+    vector<tinyobj::material_t> materials;
+    string err;
+    bool ret = tinyobj::LoadObj(shapes, materials, err, inputfile.c_str());
+    if (!err.empty()) { // `err` may contain warning message.
+      std::cerr << err << std::endl;
+    }
+    if (!ret) {
+      exit(1);
+    }
+    
+    vector<unsigned int> indices = shapes[0].mesh.indices;
+
+    //obj loader has trouble to parse both vertex and normal indices at the same time, hence we provided 2 separate obj files
+    inputfile = "pyramid_rotated_with_normals.obj";
+    ret = tinyobj::LoadObj(shapes, materials, err, inputfile.c_str());
+    if (!err.empty()) { // `err` may contain warning message.
+      std::cerr << err << std::endl;
+    }
+    if (!ret) {
+      exit(1);
+    }
+
+    Vector obj_center = Vector(48, 36.5, 37);
+
+    for (int i = 0; i < int(shapes.size()); i++) {
+        for (int j = 0; j < int(shapes[i].mesh.indices.size()); j+=3) {
+            int i1 = indices[j];
+            int i2 = indices[j+1];
+            int i3 = indices[j+2];
+            Vector v1 = Vector(shapes[i].mesh.positions[i1], shapes[i].mesh.positions[i1+1], shapes[i].mesh.positions[i1+2])*16.5 + obj_center;
+            Vector v2 = Vector(shapes[i].mesh.positions[i2], shapes[i].mesh.positions[i2+1], shapes[i].mesh.positions[i2+2])*16.5 + obj_center; 
+            Vector v3 = Vector(shapes[i].mesh.positions[i3], shapes[i].mesh.positions[i3+1], shapes[i].mesh.positions[i3+2])*16.5 + obj_center;
+            Vector normal = Vector(shapes[i].mesh.normals[j*3], shapes[i].mesh.normals[j*3+1], shapes[i].mesh.normals[j*3+2]);
+            triangles.push_back(Triangle(v1, v2-v1, v3-v1, normal, Vector(), Vector(.25,.75,.25), DIFF)); 
+        }
+    }
+}
+
+vector<Geom *> geoms;
 
 void init_geom_array() {
     int ns = sizeof(spheres) / sizeof(Sphere);
+    int ts = triangles.size();
     for(int i = 0; i < ns; i++) {
-        geoms[i] = &spheres[i];
+        geoms.push_back(&spheres[i]);
     }
-    for(int i = 0; i < int(sizeof(triangles) / sizeof(Triangle)); i++) {
-        geoms[ns+i] = &triangles[i]; 
+    for(int i = 0; i < ts; i++) {
+        geoms.push_back(&triangles[i]); 
     }
 }
 
@@ -344,10 +388,10 @@ void init_geom_array() {
 *******************************************************************/
 bool Intersect(const Ray &ray, double &t, int &id)
 {
-    const int n = int(sizeof(geoms) / sizeof(Geom *));
+    const int n = geoms.size();
     t = 1e20;
 
-    for (int i = 0; i < n; i ++) 
+    for (int i = 0; i < n; i++) 
     {
         double d = geoms[i]->Intersect(ray);
         if (d > 0.0  && d < t) 
@@ -389,7 +433,7 @@ Color Radiance(const Ray &ray, int depth, int E)
     const Geom* obj = geoms[id];
 
     Vector hitpoint = ray.org + ray.dir * t;    /* Intersection point */
-    Vector normal = (hitpoint - obj->position).Normalized();  /* Normal at intersection */ 
+    Vector normal = obj->getNormalAtPoint(hitpoint);  /* Normal at intersection */ 
     Vector nl = normal;
 
     /* Obtain flipped normal, if object hit from inside */
@@ -492,11 +536,8 @@ Color Radiance(const Ray &ray, int depth, int E)
 	//TODO glossy
     else if (obj->refl == GLOSSY) 
     {  
-        /* Return light emission mirror reflection (via recursive call using perfect
-           reflection vector) */
-        return obj->emission + 
-            col.MultComponents(Radiance(Ray(hitpoint, ray.dir - normal * 2 * normal.Dot(ray.dir)),
-                               depth, 1));
+        return obj->emission + col.MultComponents(Radiance(Ray(hitpoint, ray.dir - normal * 2 * normal.Dot(ray.dir)),
+                                   depth, 1));
     }
 
     /* Otherwise object transparent, i.e. assumed dielectric glass material */
@@ -566,7 +607,7 @@ Color Radiance(const Ray &ray, int depth, int E)
 * - Number of samples per subpixel (non-uniform filtering): samples 
 * Rendered result saved as PPM image file
 *******************************************************************/
-
+ 
 int main(int argc, char *argv[]) 
 {
     // PathTracing [samples per subpixel] [(sqrt of) samples on lens] [focal distance|cm] [aperture|f-stops]
@@ -607,6 +648,7 @@ int main(int argc, char *argv[])
     /* Final rendering */
     Image img(width, height);
 
+    loadObjects();
     init_geom_array();
 
     /* Loop over image rows */
@@ -705,4 +747,5 @@ int main(int argc, char *argv[])
     cout << endl;
 
     img.Save(string("image.ppm"));
+
 }
