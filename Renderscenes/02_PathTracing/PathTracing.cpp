@@ -360,6 +360,43 @@ bool Intersect(const Ray &ray, double &t, int &id)
     return t < 1e20;
 }
 
+/*
+ * return a random vector around axis
+ */
+Vector getSample(Vector axis, int n) {
+	double e1 = drand48();
+	double e2 = drand48();
+	
+	/* Set up local orthogonal coordinate system u,v,w on surface */
+	Vector w = axis; 
+	Vector u;
+	Vector r (drand48(), drand48(), drand48());
+	while (fabs(r.Dot(w)) < 0.00001) {
+		r = Vector(drand48(), drand48(), drand48());
+	}
+	u = (r.Cross(w)).Normalized();
+
+	Vector v = w.Cross(u);
+		
+	/* calc vector */
+	double phi = 2.0 * M_PI * e1;
+	//double theta = acos(pow(e2, 1/(n+1)));
+	double h = pow(e2, 1/(n+1));
+
+	double z = h + (1 - h) * e2;
+	double sinT = sqrt(1 - z * z);
+	double x = cos(phi) * sinT;
+	double y = sin(phi) * sinT;
+
+	Vector sample (x,y,z);
+	Vector utrans(u.x, v.x, w.x);
+	Vector vtrans(u.y, v.y, w.y);
+	Vector wtrans(u.z, v.z, w.z); 
+	Vector sampleDirection(utrans.x * sample.x + utrans.y * sample.y + utrans.z * sample.z,
+						   vtrans.x * sample.x + vtrans.y * sample.y + vtrans.z * sample.z,
+						   wtrans.x * sample.x + wtrans.y * sample.y + wtrans.z * sample.z);
+	return sampleDirection;
+}
 
 /******************************************************************
 * Recursive path tracing for computing radiance via Monte-Carlo
@@ -489,14 +526,29 @@ Color Radiance(const Ray &ray, int depth, int E)
             col.MultComponents(Radiance(Ray(hitpoint, ray.dir - normal * 2 * normal.Dot(ray.dir)),
                                depth, 1));
     }
-	//TODO glossy
-    else if (obj->refl == GLOSSY) 
-    {  
+	else if (obj->refl == GLOSSY) 
+    { 
+		Vector perfectReflectionDirection = ray.dir - normal * 2 * normal.Dot(ray.dir);
+		Vector perfectReflectionDirectionN = perfectReflectionDirection.Normalized();
+
         /* Return light emission mirror reflection (via recursive call using perfect
            reflection vector) */
-        return obj->emission + 
-            col.MultComponents(Radiance(Ray(hitpoint, ray.dir - normal * 2 * normal.Dot(ray.dir)),
-                               depth, 1));
+		double glossiness_factor = 0.5; // 0.5 = glossy, 2.4 = mirror , something inbetween not tested yet
+		if (depth < 3) {
+			int num_samples = 8;
+			Color avrg(0.0,0.0,0.0);
+			for (int i = 0; i < num_samples; i++) {
+				Color rad (Radiance(Ray(hitpoint, getSample(perfectReflectionDirectionN, glossiness_factor)), depth, 0));
+				avrg.x += rad.x;
+				avrg.y += rad.y;
+				avrg.z += rad.z;
+			}
+			avrg = avrg/num_samples;
+			return obj->emission + col.MultComponents(avrg);
+		}
+		
+		//return obj.emission + col.MultComponents(Radiance(Ray(hitpoint, perfectReflectionDirection), depth, 1)); //this takes way too long
+		return obj->emission;
     }
 
     /* Otherwise object transparent, i.e. assumed dielectric glass material */
@@ -575,7 +627,7 @@ int main(int argc, char *argv[])
     /* Default values */
     int width = 1024;
     int height = 768;
-    int samples = 1;
+    int samples = 4;
     int lens_samples = 1;
     double focal_distance = 248.6;  //focused on metal sphere (217.6 would focus on glass sphere)   
     double image_distance = 1;  //for our virtual camera the image sensor is 1 unit away from the lens   
