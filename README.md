@@ -33,8 +33,7 @@ ___
 ## 02_PathTracing
 ![alt tag](https://raw.githubusercontent.com/MasterMoritz/Advanced-Computer-Graphics/master/Images/no_focus.jpg)
 ![alt tag](https://raw.githubusercontent.com/MasterMoritz/Advanced-Computer-Graphics/master/Images/glass_focus.jpg)
-![alt tag](https://raw.githubusercontent.com/MasterMoritz/Advanced-Computer-Graphics/master/Images/metal_focus.jpg)
-![alt tag](https://raw.githubusercontent.com/MasterMoritz/Advanced-Computer-Graphics/master/Images/dahoe.jpg)
+![alt tag](https://raw.githubusercontent.com/MasterMoritz/Advanced-Computer-Graphics/master/Images/metal_focus.jpg) ![alt tag](https://raw.githubusercontent.com/MasterMoritz/Advanced-Computer-Graphics/master/Images/dahoe.jpg)
 ![alt tag](https://raw.githubusercontent.com/MasterMoritz/Advanced-Computer-Graphics/master/Images/triangle_geometry.jpg)
 
 ### render scene :
