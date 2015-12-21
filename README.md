@@ -44,6 +44,4 @@ ___
   + ./PathTracing 40
   + ./PathTracing 20 10
   + ./PathTracing 1 1 248.6 2.8
-+ note: 
-  + to disable DOF, simply use a high f-stop value (e.g. 2000)
-  + to add glossy/translucent spheres or a triangle mesh to the scene, uncomment the prepared code sections
++ note: to disable DOF, simply use a high f-stop value (e.g. 2000)
