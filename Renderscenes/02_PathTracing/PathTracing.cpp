@@ -393,8 +393,8 @@ Vector getSample(Vector axis, int n) {
 	Vector vtrans(u.y, v.y, w.y);
 	Vector wtrans(u.z, v.z, w.z); 
 	Vector sampleDirection(utrans.x * sample.x + utrans.y * sample.y + utrans.z * sample.z,
-						   vtrans.x * sample.x + vtrans.y * sample.y + vtrans.z * sample.z,
-						   wtrans.x * sample.x + wtrans.y * sample.y + wtrans.z * sample.z);
+	                       vtrans.x * sample.x + vtrans.y * sample.y + vtrans.z * sample.z,
+	                       wtrans.x * sample.x + wtrans.y * sample.y + wtrans.z * sample.z);
 	return sampleDirection;
 }
 
@@ -533,7 +533,7 @@ Color Radiance(const Ray &ray, int depth, int E)
 
         /* Return light emission mirror reflection (via recursive call using perfect
            reflection vector) */
-		double glossiness_factor = 0.5; // 0.5 = glossy, 2.4 = mirror , something inbetween not tested yet
+		double glossiness_factor = 0.5; // <1.0 = glossy, >=1.0 = mirror
 		if (depth < 3) {
 			int num_samples = 8;
 			Color avrg(0.0,0.0,0.0);
