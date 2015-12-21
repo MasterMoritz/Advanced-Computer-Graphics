@@ -321,8 +321,9 @@ Sphere spheres[] =
     Sphere( 1e5, Vector(      50,-1e5 +81.6,      81.6),  Vector(), Vector(.75,.75,.75), DIFF), /* Ceiling */
 
     Sphere(16.5, Vector(27, 16.5, 47), Vector(), Vector(1,1,1)*.999,  SPEC), /* Mirror sphere */
-    Sphere(10.5, Vector(50, 16.5, 105), Vector(), Vector(1,1,1)*.999,  GLOSSY, 0.8), /* Glossy sphere */
-	Sphere(10.5, Vector(10.5, 50.0, 105), Vector(), Vector(1,1,1)*.999,  TRANS, 1, 0.8), /* Transluscent sphere */
+    //temporarily commented out to keep example scene simple    
+    //Sphere(10.5, Vector(50, 16.5, 105), Vector(), Vector(1,1,1)*.999,  GLOSSY, 0.8), /* Glossy sphere */
+	//Sphere(10.5, Vector(10.5, 50.0, 105), Vector(), Vector(1,1,1)*.999,  TRANS, 1, 0.8), /* Transluscent sphere */
     Sphere(16.5, Vector(73, 16.5, 78), Vector(), Vector(1,1,1)*.999,  REFR), /* Glass sphere */
 
     Sphere( 1.5, Vector(50, 81.6-16.5, 81.6), Vector(4,4,4)*100, Vector(), DIFF), /* Light */
@@ -332,7 +333,8 @@ vector<Triangle> triangles;
 
 /* Load the triangle geometry */
 void loadObjects() {
-    string inputfile = "pyramid_rotated.obj";
+    //temporarily commented out to keep example scene simple
+    /*string inputfile = "pyramid_rotated.obj";
     vector<tinyobj::shape_t> shapes;
     vector<tinyobj::material_t> materials;
     string err;
@@ -369,7 +371,7 @@ void loadObjects() {
             Vector normal = Vector(shapes[i].mesh.normals[j*3], shapes[i].mesh.normals[j*3+1], shapes[i].mesh.normals[j*3+2]);
             triangles.push_back(Triangle(v1, v2-v1, v3-v1, normal, Vector(), Vector(.25,.75,.25), DIFF)); 
         }
-    }
+    }*/
 }
 
 vector<Geom *> geoms;
@@ -710,7 +712,7 @@ int main(int argc, char *argv[])
     /* Default values */
     int width = 1024;
     int height = 768;
-    int samples = 4;
+    int samples = 1;
     int lens_samples = 1;
     double focal_distance = 248.6;  //focused on metal sphere (217.6 would focus on glass sphere)   
     double image_distance = 1;  //for our virtual camera the image sensor is 1 unit away from the lens   
@@ -730,7 +732,7 @@ int main(int argc, char *argv[])
     double focal_length = 1 / (1/image_distance + 1/focal_distance);    //focus length for given distances of focal & image plane to the lens
      /* Adapt behaviour of fstops to those of a real camera with focal length of 100mm (where distance to image sensor is not exactly 10mm but dependent on the focal distance) */
     fstops *= focal_length / 10;
-    double aperture = 0/*focal_length/fstops*/ /*temporarily disabled depth of field for development convenience*/;
+    double aperture = focal_length/fstops;
      
     /* Set camera origin and viewing direction (negative z direction) */
     Ray camera(Vector(50.0, 52.0, 170 + 125.6), Vector(0.0, -0.042612, -1.0).Normalized());
