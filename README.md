@@ -31,7 +31,7 @@ ___
 ___
 
 ## 02_PathTracing
-![Alt text](images/dahoe.jpg?raw=true "happy little accident")
+![alt tag](https://raw.githubusercontent.com/MasterMoritz/Advanced-Computer-Graphics/master/Images/dahoe.jpg)
 
 ### render scene :
 
