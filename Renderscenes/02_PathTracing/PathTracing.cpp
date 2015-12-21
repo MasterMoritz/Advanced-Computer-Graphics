@@ -183,23 +183,31 @@ struct Image
 
 
 /*------------------------------------------------------------------
-| Scene objects are spheres; material either perfectly diffuse, 
-| specular (mirror reflection) or transparent (refraction/reflection)
-| (DIFFuse, SPECular, REFRactive)
+| Scene objects are spheres or triangle spheres; material either 
+| perfectly diffuse, specular (mirror reflection), transparent 
+| (refraction/reflection), glossy or translucent
+| (DIFFuse, SPECular, REFRactive, GLOSSY, TRANSlucent)
 ------------------------------------------------------------------*/
 enum Refl_t { DIFF, SPEC, REFR, GLOSSY, TRANS }; 
 
-struct Sphere 
+struct Geom 
 {
-    double radius;       
-    Vector position; 
+    Geom(Vector position_, Vector emission_, 
+           Vector color_, Refl_t refl_): position(position_), emission(emission_), 
+           color(color_), refl(refl_) {}
+    Vector position;
     Color emission, color;      
-    Refl_t refl;     
+    Refl_t refl;
+    virtual double Intersect(const Ray &ray) const = 0;
+};
+
+struct Sphere : Geom
+{
+    double radius;
     
     Sphere(double radius_, Vector position_, Vector emission_, 
-           Vector color_, Refl_t refl_):
-           radius(radius_), position(position_), emission(emission_), 
-           color(color_), refl(refl_) {}
+           Vector color_, Refl_t refl_): Geom(position_, emission_, color_, refl_),
+           radius(radius_) {}
 
     double Intersect(const Ray &ray) const 
     { 
@@ -227,6 +235,70 @@ struct Sphere
     }
 };
 
+struct Triangle : Geom
+{
+	Vector p0; //origin               
+	Vector edge_a, edge_b, edge_c; //edges making up the triangle
+	Vector normal;
+	double a_len, b_len, c_len;    /* Edge lengths */
+
+	//create a triangle, diagonal edge is calculated from 2 given edges
+	Triangle(const Vector p0_,
+		const Vector &a_, const Vector &b_,
+        Vector position_,
+		const Color &emission_, const Color &color_, Refl_t refl_) :
+		Geom(position_, emission_, color_, refl_), p0(p0_), edge_a(a_), edge_b(b_)
+    {
+		edge_c = edge_a - edge_b; //diagonal edge from point b to point a
+		normal = edge_a.Cross(edge_b);
+		normal = normal.Normalized();
+		/*a_len = edge_a.Length();
+		b_len = edge_b.Length();
+		c_len = edge_c.Length();*/
+	}
+
+	/* Triangle-ray intersection 
+	 * Moeller-Trumbore approach
+	*/
+	double Intersect(const Ray &ray) const 
+    {
+		double epsilon = 0.0000001;
+
+		Vector d = ray.dir;
+		Vector p = ray.org;
+		Vector s = p - p0;
+
+		//ray and triangle are parallel if determinant is close to 0
+		double detT = d.Cross(edge_b).Dot(edge_a);
+
+		if (fabs(detT) < epsilon) {
+			return 0.0;
+		}
+
+		//check ray-plane instersection
+		double inv_detT = 1 / detT;
+		double t = (s.Cross(edge_a).Dot(edge_b)) * inv_detT;
+
+		if (t <= epsilon)
+			return 0.0;
+
+		//check if intersection is within triangle
+		double bary_x = -1*(d.Cross(s).Dot(edge_b)) * inv_detT;
+
+		if (bary_x < 0 || bary_x > 1) {
+			return 0.0;
+		}
+
+		double bary_y = -1*(d.Cross(edge_a).Dot(s)) * inv_detT;
+
+		if (bary_y < 0 || bary_x + bary_y > 1) {
+			return 0.0;
+		}
+
+		return t;
+	}
+};
+
 /******************************************************************
 * Hard-coded scene definition: the geometry is composed of spheres
 * (i.e. Cornell box walls are part of very large spheres). 
@@ -251,6 +323,19 @@ Sphere spheres[] =
     Sphere( 1.5, Vector(50, 81.6-16.5, 81.6), Vector(4,4,4)*100, Vector(), DIFF), /* Light */
 };
 
+Triangle triangles[] = {};
+
+Geom *geoms[sizeof(spheres)/sizeof(Sphere) + sizeof(triangles)/sizeof(Triangle)];
+
+void init_geom_array() {
+    int ns = sizeof(spheres) / sizeof(Sphere);
+    for(int i = 0; i < ns; i++) {
+        geoms[i] = &spheres[i];
+    }
+    for(int i = 0; i < int(sizeof(triangles) / sizeof(Triangle)); i++) {
+        geoms[ns+i] = &triangles[i]; 
+    }
+}
 
 /******************************************************************
 * Check for closest intersection of a ray with the scene;
@@ -259,18 +344,19 @@ Sphere spheres[] =
 *******************************************************************/
 bool Intersect(const Ray &ray, double &t, int &id)
 {
-    const int n = int(sizeof(spheres) / sizeof(Sphere));
+    const int n = int(sizeof(geoms) / sizeof(Geom *));
     t = 1e20;
 
     for (int i = 0; i < n; i ++) 
     {
-        double d = spheres[i].Intersect(ray);
+        double d = geoms[i]->Intersect(ray);
         if (d > 0.0  && d < t) 
         {
             t = d;
             id = i;
         }
     }
+    
     return t < 1e20;
 }
 
@@ -295,22 +381,22 @@ Color Radiance(const Ray &ray, int depth, int E)
     int numSpheres = int(sizeof(spheres) / sizeof(Sphere));
 
     double t;                               
-    int id = 0;  
+    int id = 0; 
                              
     if (!Intersect(ray, t, id))   /* No intersection with scene */
         return BackgroundColor; 
 
-    const Sphere &obj = spheres[id];     
+    const Geom* obj = geoms[id];
 
     Vector hitpoint = ray.org + ray.dir * t;    /* Intersection point */
-    Vector normal = (hitpoint - obj.position).Normalized();  /* Normal at intersection */ 
+    Vector normal = (hitpoint - obj->position).Normalized();  /* Normal at intersection */ 
     Vector nl = normal;
 
     /* Obtain flipped normal, if object hit from inside */
     if (normal.Dot(ray.dir) >= 0) 
         nl = nl*-1.0;
 
-    Color col = obj.color; 
+    Color col = obj->color; 
 
     /* Maximum RGB reflectivity for Russian Roulette */
     double p = col.Max();
@@ -320,10 +406,10 @@ Color Radiance(const Ray &ray, int depth, int E)
         if (drand48() < p)            /* Russian Roulette */
             col = col * (1/p);        /* Scale estimator to remain unbiased */
         else 
-            return obj.emission * E;  /* No further bounces, only return potential emission */
+            return obj->emission * E;  /* No further bounces, only return potential emission */
     }
 
-    if (obj.refl == DIFF)
+    if (obj->refl == DIFF)
     {                  
         /* Compute random reflection vector on hemisphere */
         double r1 = 2.0 * M_PI * drand48(); 
@@ -393,22 +479,22 @@ Color Radiance(const Ray &ray, int depth, int E)
    
         /* Return potential light emission, direct lighting, and indirect lighting (via
            recursive call for Monte-Carlo integration */      
-        return obj.emission * E + e + col.MultComponents(Radiance(Ray(hitpoint,d), depth, 0));
+        return obj->emission * E + e + col.MultComponents(Radiance(Ray(hitpoint,d), depth, 0));
     } 
-    else if (obj.refl == SPEC) 
+    else if (obj->refl == SPEC) 
     {  
         /* Return light emission mirror reflection (via recursive call using perfect
            reflection vector) */
-        return obj.emission + 
+        return obj->emission + 
             col.MultComponents(Radiance(Ray(hitpoint, ray.dir - normal * 2 * normal.Dot(ray.dir)),
                                depth, 1));
     }
 	//TODO glossy
-    else if (obj.refl == GLOSSY) 
+    else if (obj->refl == GLOSSY) 
     {  
         /* Return light emission mirror reflection (via recursive call using perfect
            reflection vector) */
-        return obj.emission + 
+        return obj->emission + 
             col.MultComponents(Radiance(Ray(hitpoint, ray.dir - normal * 2 * normal.Dot(ray.dir)),
                                depth, 1));
     }
@@ -430,7 +516,7 @@ Color Radiance(const Ray &ray, int depth, int E)
 
     /* Check for total internal reflection, if so only reflect */
     if (cos2t < 0)  
-        return obj.emission + col.MultComponents( Radiance(reflRay, depth, 1));
+        return obj->emission + col.MultComponents( Radiance(reflRay, depth, 1));
 
     /* Otherwise reflection and/or refraction occurs */
     Vector tdir;
@@ -462,14 +548,14 @@ Color Radiance(const Ray &ray, int depth, int E)
     double RP = Re / P;         /* Scaling factors for unbiased estimator */
     double TP = Tr / (1 - P);
 
-    if (depth < 3)   /* Initially both reflection and trasmission */
-        return obj.emission + col.MultComponents(Radiance(reflRay, depth, 1) * Re + 
+    if (depth < 3)   /* Initially both reflection and transmission */
+        return obj->emission + col.MultComponents(Radiance(reflRay, depth, 1) * Re + 
                                                  Radiance(Ray(hitpoint, tdir), depth, 1) * Tr);
     else             /* Russian Roulette */ 
         if (drand48() < P)
-            return obj.emission + col.MultComponents(Radiance(reflRay, depth, 1) * RP);
+            return obj->emission + col.MultComponents(Radiance(reflRay, depth, 1) * RP);
         else
-            return obj.emission + col.MultComponents(Radiance(Ray(hitpoint,tdir), depth, 1) * TP);
+            return obj->emission + col.MultComponents(Radiance(Ray(hitpoint,tdir), depth, 1) * TP);
 }
 
 
@@ -520,6 +606,8 @@ int main(int argc, char *argv[])
 
     /* Final rendering */
     Image img(width, height);
+
+    init_geom_array();
 
     /* Loop over image rows */
     for (int y = 0; y < height; y ++) 

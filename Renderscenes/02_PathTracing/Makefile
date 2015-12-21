@@ -4,7 +4,7 @@ LD = g++
 OBJ = PathTracing.o 
 TARGET = PathTracing
 
-CFLAGS = -O3 -Wall
+CFLAGS = -O3 -Wall -std=c++11
 LDLIBS =
 INCLUDES = 
 
