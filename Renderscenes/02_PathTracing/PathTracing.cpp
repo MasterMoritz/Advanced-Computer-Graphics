@@ -339,8 +339,7 @@ vector<Triangle> triangles;
 
 /* Load the triangle geometry */
 void loadObjects() {
-    //temporarily commented out to keep example scene simple
-    /*string inputfile = "pyramid_rotated.obj";
+    string inputfile = "pyramid_rotated.obj";
     vector<tinyobj::shape_t> shapes;
     vector<tinyobj::material_t> materials;
     string err;
@@ -377,7 +376,7 @@ void loadObjects() {
             Vector normal = Vector(shapes[i].mesh.normals[j*3], shapes[i].mesh.normals[j*3+1], shapes[i].mesh.normals[j*3+2]);
             triangles.push_back(Triangle(v1, v2-v1, v3-v1, normal, Vector(), Vector(.25,.75,.25), DIFF)); 
         }
-    }*/
+    }
 }
 
 vector<Geom *> geoms;
