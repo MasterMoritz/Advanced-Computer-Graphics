@@ -31,7 +31,11 @@ ___
 ___
 
 ## 02_PathTracing
+![alt tag](https://raw.githubusercontent.com/MasterMoritz/Advanced-Computer-Graphics/master/Images/no_focus.jpg)
+![alt tag](https://raw.githubusercontent.com/MasterMoritz/Advanced-Computer-Graphics/master/Images/glass_focus.jpg)
+![alt tag](https://raw.githubusercontent.com/MasterMoritz/Advanced-Computer-Graphics/master/Images/metal_focus.jpg)
 ![alt tag](https://raw.githubusercontent.com/MasterMoritz/Advanced-Computer-Graphics/master/Images/dahoe.jpg)
+![alt tag](https://raw.githubusercontent.com/MasterMoritz/Advanced-Computer-Graphics/master/Images/triangle_geometry.jpg)
 
 ### render scene :
 
@@ -41,3 +45,6 @@ ___
   + ./PathTracing 40
   + ./PathTracing 20 10
   + ./PathTracing 1 1 248.6 2.8
++ note: 
+  + to disable DOF, simply use a high f-stop value (e.g. 2000)
+  + to add glossy/translucent spheres or a triangle mesh to the scene, uncomment the prepared code sections
