@@ -124,6 +124,7 @@ public:
         kSmallMirrorSphere = 64,
         kSmallGlassSphere  = 128,
         kGlossyFloor       = 256,
+		kWhiteWalls        = 512,
         kBothSmallSpheres  = (kSmallMirrorSphere | kSmallGlassSphere),
         kBothLargeSpheres  = (kLargeMirrorSphere | kLargeGlassSphere),
         kDefault           = (kLightCeiling | kBothSmallSpheres),
@@ -176,11 +177,17 @@ public:
         // 3) diffuse green left wall
         mat.Reset();
         mat.mDiffuseReflectance = Vec3f(0.156863f, 0.803922f, 0.172549f);
+		if (aBoxMask & kWhiteWalls) {
+        	mat.mDiffuseReflectance = Vec3f(0.803922f, 0.803922f, 0.803922f);
+		}
         mMaterials.push_back(mat);
 
         // 4) diffuse red right wall
         mat.Reset();
         mat.mDiffuseReflectance = Vec3f(0.803922f, 0.152941f, 0.152941f);
+		if (aBoxMask & kWhiteWalls) {
+        	mat.mDiffuseReflectance = Vec3f(0.803922f, 0.803922f, 0.803922f);
+		}
         mMaterials.push_back(mat);
 
         // 5) diffuse white back wall
@@ -202,6 +209,9 @@ public:
         // 8) diffuse blue wall (back wall for glossy floor)
         mat.Reset();
         mat.mDiffuseReflectance = Vec3f(0.156863f, 0.172549f, 0.803922f);
+		if (aBoxMask & kWhiteWalls) {
+        	mat.mDiffuseReflectance = Vec3f(0.803922f, 0.803922f, 0.803922f);
+		}
         mMaterials.push_back(mat);
 
         delete mGeometry;
