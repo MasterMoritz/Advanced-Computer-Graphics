@@ -465,6 +465,11 @@ public:
             name    += "large glass sphere";
             acronym += "lg";
         }
+        else if((aBoxMask & kDispersionSphere) == kDispersionSphere)
+        {
+            name    += "large dispersion sphere";
+            acronym += "ld";
+        }
         else
         {
             name    += "empty";
