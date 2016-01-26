@@ -27,6 +27,7 @@
 
 #include <vector>
 #include <cmath>
+#include <functional>
 #include "math.hxx"
 #include "frame.hxx"
 #include "ray.hxx"
@@ -48,7 +49,13 @@ public:
         mPhongExponent      = 1.f;
         mMirrorReflectance  = Vec3f(0);
         mIOR = -1.f;
+		calculateIOR = [](int wave_length) {
+			return -1.f;
+		};
     }
+
+	//returns the index of refraction given a wavelength
+	std::function<float(int)> calculateIOR;
 
     // diffuse is simply added to the others
     Vec3f mDiffuseReflectance;
