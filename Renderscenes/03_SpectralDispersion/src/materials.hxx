@@ -49,13 +49,13 @@ public:
         mPhongExponent      = 1.f;
         mMirrorReflectance  = Vec3f(0);
         mIOR = -1.f;
-		calculateIOR = [](int wave_length) {
+		calculateIOR = [](float wave_length) {
 			return -1.f;
 		};
     }
 
-	//returns the index of refraction given a wavelength
-	std::function<float(int)> calculateIOR;
+	//returns the index of refraction given a wavelength in µm
+	std::function<float(float)> calculateIOR;
 
     // diffuse is simply added to the others
     Vec3f mDiffuseReflectance;
