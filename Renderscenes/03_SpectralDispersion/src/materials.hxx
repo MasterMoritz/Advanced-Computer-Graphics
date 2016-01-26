@@ -49,8 +49,9 @@ public:
         mPhongExponent      = 1.f;
         mMirrorReflectance  = Vec3f(0);
         mIOR = -1.f;
-		calculateIOR = [](float wave_length) {
-			return -1.f;
+		calculateIOR = [this](float wave_length) {
+			mIOR = -1.f;
+			return mIOR;
 		};
     }
 
