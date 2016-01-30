@@ -33,43 +33,52 @@
 #include "ray.hxx"
 #include "scene.hxx"
 #include "utils.hxx"
+#include "SimpleSpectrum.hxx"
 
 class Material
 {
 public:
-    Material()
-    {
-        Reset();
-    }
+	Material()
+	{
+		Reset();
+	}
 
-    void Reset()
-    {
-        mDiffuseReflectance = Vec3f(0);
-        mPhongReflectance   = Vec3f(0);
-        mPhongExponent      = 1.f;
-        mMirrorReflectance  = Vec3f(0);
-        mIOR = -1.f;
+	void Reset()
+	{
+		mDiffuseReflectance = Vec3f(0);
+		mPhongReflectance = Vec3f(0);
+		mPhongExponent = 1.f;
+		mMirrorReflectance = Vec3f(0);
+		mIOR = -1.f;
 		calculateIOR = [this](float wave_length) {
 			return mIOR;
 		};
-    }
+		calculatemDiffuseReflectance = [this](float wave_length, Vec3f rgb) {
+			SimpleSpectrum mDiffuseReflectanceSpectrum(rgb.x, rgb.y, rgb.z);
+			float ref = mDiffuseReflectanceSpectrum.Sample(wave_length);
+			mDiffuseReflectance = Vec3f(ref, ref, ref);	//change this to a single float after we are sure the renderer works
+			return mDiffuseReflectance;
+		};
+	}
 
 	//returns the index of refraction given a wavelength in µm
 	std::function<float(float)> calculateIOR;
 
-    // diffuse is simply added to the others
-    Vec3f mDiffuseReflectance;
-    // Phong is simply added to the others
-    Vec3f mPhongReflectance;
-    float mPhongExponent;
+	std::function<Vec3f(float, Vec3f)> calculatemDiffuseReflectance;
 
-    // mirror can be either simply added, or mixed using Fresnel term
-    // this is governed by mIOR, if it is >= 0, fresnel is used, otherwise
-    // it is not
-    Vec3f mMirrorReflectance;
+	// diffuse is simply added to the others
+	Vec3f mDiffuseReflectance;
+	// Phong is simply added to the others
+	Vec3f mPhongReflectance;
+	float mPhongExponent;
 
-    // When mIOR >= 0, we also transmit (just clear glass)
-    float mIOR;
+	// mirror can be either simply added, or mixed using Fresnel term
+	// this is governed by mIOR, if it is >= 0, fresnel is used, otherwise
+	// it is not
+	Vec3f mMirrorReflectance;
+
+	// When mIOR >= 0, we also transmit (just clear glass)
+	float mIOR;
 };
 
 #endif //__MATERIALS_HXX__
