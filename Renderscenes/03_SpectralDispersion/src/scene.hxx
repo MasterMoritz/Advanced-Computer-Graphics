@@ -412,6 +412,93 @@ public:
         }
     }
 
+		/*void LoadPrismScene(
+			const Vec2i &aResolution)
+		{
+			mSceneName = "";
+
+			bool light_box = true;
+
+			// because it looks really weird with it
+			if (light_point)
+				light_box = false;
+
+			// Camera
+			mCamera.Setup(
+				Vec3f(-0.0439815f, -4.12529f, 0.222539f),
+				Vec3f(0f, 0f, -1f),
+				Vec3f(0f, 1f, 0f),
+				Vec2f(float(aResolution.x), float(aResolution.y)), 45);
+
+			// Materials
+			Material mat;
+			// 0) light, will only emit
+			mMaterials.push_back(mat);
+
+			// 1) diffuse black tube
+			mat.Reset();
+			mat.mDiffuseReflectance = Vec3f(0f);
+			mMaterials.push_back(mat);
+
+			// 2) diamond prism
+			mat.Reset();
+			mat.mMirrorReflectance = Vec3f(1.f);
+			mat.mIOR = 2.417f;
+			mMaterials.push_back(mat);
+
+			delete mGeometry;
+
+			//////////////////////////////////////////////////////////////////////////
+			// vertices of long, thin black tube
+			Vec3f tube_vertices[8] = {
+				Vec3f(-500f,  -0.01f, -0.01f),
+				Vec3f(-500f,  0.01f, -0.01f),
+				Vec3f(-500f,  -0.01f,  0.01f),
+				Vec3f(-500f,  0.01f,  0.01f),
+				Vec3f(-1f,  -0.01f, -0.01f),
+				Vec3f(-1f,  0.01f, -0.01f),
+				Vec3f(-1f,  -0.01f,  0.01f),
+				Vec3f(-1f,  0.01f,  0.01f),
+			};
+
+			GeometryList *geometryList = new GeometryList;
+			mGeometry = geometryList;
+
+			// Floor
+			geometryList->mGeometry.push_back(new Triangle(tube_vertices[0], tube_vertices[4], tube_vertices[5], 1));
+			geometryList->mGeometry.push_back(new Triangle(tube_vertices[5], tube_vertices[1], tube_vertices[0], 1));
+			// Back wall
+			geometryList->mGeometry.push_back(new Triangle(tube_vertices[0], tube_vertices[1], tube_vertices[2], 1));
+			geometryList->mGeometry.push_back(new Triangle(tube_vertices[2], tube_vertices[3], tube_vertices[0], 1));
+
+			// Ceiling
+			geometryList->mGeometry.push_back(new Triangle(tube_vertices[2], tube_vertices[6], tube_vertices[7], 1));
+			geometryList->mGeometry.push_back(new Triangle(tube_vertices[7], tube_vertices[3], tube_vertices[2], 1));
+
+			// Left wall
+			geometryList->mGeometry.push_back(new Triangle(tube_vertices[3], tube_vertices[7], tube_vertices[4], 1));
+			geometryList->mGeometry.push_back(new Triangle(tube_vertices[4], tube_vertices[0], tube_vertices[3], 1));
+
+			// Right wall
+			geometryList->mGeometry.push_back(new Triangle(tube_vertices[1], tube_vertices[5], tube_vertices[6], 1));
+			geometryList->mGeometry.push_back(new Triangle(tube_vertices[6], tube_vertices[2], tube_vertices[1], 1));
+
+			//TODO: narrow tube opening & prism
+
+			//////////////////////////////////////////////////////////////////////////
+			// Lights
+
+			PointLight *l = new PointLight(Vec3f(0.0, -0.5, 1.0));
+			l->mIntensity = Vec3f(70.f * (INV_PI_F * 0.25f));
+			mLights.push_back(l);
+
+			//background light for debugging
+			/*BackgroundLight *l = new BackgroundLight;
+			l->mScale = 1.f;
+			mLights.push_back(l);
+			mBackground = l;*/
+		/*}*/
+
     void BuildSceneSphere()
     {
         Vec3f bboxMin( 1e36f);

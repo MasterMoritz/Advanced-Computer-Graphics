@@ -368,6 +368,7 @@ void ParseCommandline(int argc, const char *argv[], Config &oConfig)
     // Load scene
     Scene *scene = new Scene;
     scene->LoadCornellBox(oConfig.mResolution, g_SceneConfigs[sceneID]);
+		//scene->LoadPrismScene(oConfig.mResolution);
     scene->BuildSceneSphere();
 
     oConfig.mScene = scene;
