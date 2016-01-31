@@ -31,6 +31,7 @@
 #include <string.h>
 #include <algorithm>
 #include <map>
+#include <mutex>
 #include "utils.hxx"
 #include "conversion.hxx"
 
@@ -56,7 +57,13 @@ public:
 
         int x = int(aSample.x);
         int y = int(aSample.y);
-				mColor[x + y * mResX].insert(std::pair<double, double>(aWavelength, (double)aColor.x));
+				m.lock();
+				std::map<double, double>::iterator it = mColor[x + y * mResX].find(aWavelength);
+				if (it == mColor[x + y * mResX].end())
+					mColor[x + y * mResX].insert(std::pair<double, double>(aWavelength, (double)aColor.x));
+				else
+					it->second += aColor.x;
+				m.unlock();
     }
 
     //////////////////////////////////////////////////////////////////////////
@@ -324,6 +331,7 @@ private:
     Vec2f              mResolution;
     int                mResX;
     int                mResY;
+		std::mutex				 m;
 };
 
 #endif //__FRAMEBUFFER_HXX__
