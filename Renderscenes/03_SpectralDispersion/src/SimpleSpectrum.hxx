@@ -104,6 +104,7 @@ public:
 		}
 	}
 
+	//lambda in [nm]
 	double Sample(double lambda)
 	{
 		// find closest smaller lambda

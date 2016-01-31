@@ -218,14 +218,15 @@ public:
         // 9) glass ball with dispersion (dense flint SCHOTT - SF6)
         mat.Reset();
         mat.mMirrorReflectance  = Vec3f(1.f);
-		mat.mIOR = 1.6f;
+				mat.mIOR = 1.6f;
         mat.calculateIOR = [&mat](float wave_length) {
-			float wave_squared = wave_length * wave_length;
-			mat.mIOR = sqrt( (1.72448482 * wave_squared) / (wave_squared - 0.0134871947) + 
-			                 (0.390104889 * wave_squared) / (wave_squared - 0.0569318095) + 
-			                 (1.04572858 * wave_squared) / (wave_squared - 118.557185));
-			return mat.mIOR;
-		};
+					wave_length /= 1000;	//[nm] -> [µm]
+					float wave_squared = wave_length * wave_length;
+					mat.mIOR = sqrt( (1.72448482 * wave_squared) / (wave_squared - 0.0134871947) + 
+													 (0.390104889 * wave_squared) / (wave_squared - 0.0569318095) + 
+													 (1.04572858 * wave_squared) / (wave_squared - 118.557185));
+					return mat.mIOR;
+				};
 			
         mMaterials.push_back(mat);
 

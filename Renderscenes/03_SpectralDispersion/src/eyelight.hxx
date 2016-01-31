@@ -44,36 +44,37 @@ public:
         AbstractRenderer(aScene), mRng(aSeed)
     {}
 
-    virtual void RunIteration(int aIteration, double wavelength)
+    virtual void RunIteration(int aIteration)
     {
         const int resX = int(mScene.mCamera.mResolution.x);
         const int resY = int(mScene.mCamera.mResolution.y);
+				for (int wavelength = 380; wavelength < 780.1; wavelength += 20) {
 
-        for(int pixID = 0; pixID < resX * resY; pixID++)
-        {
-            //////////////////////////////////////////////////////////////////////////
-            // Generate ray
-            const int x = pixID % resX;
-            const int y = pixID / resX;
+					for (int pixID = 0; pixID < resX * resY; pixID++)
+					{
+						//////////////////////////////////////////////////////////////////////////
+						// Generate ray
+						const int x = pixID % resX;
+						const int y = pixID / resX;
 
-            const Vec2f sample = Vec2f(float(x), float(y)) +
-                (aIteration == 1 ? Vec2f(0.5f) : mRng.GetVec2f());
+						const Vec2f sample = Vec2f(float(x), float(y)) +
+							(aIteration == 1 ? Vec2f(0.5f) : mRng.GetVec2f());
 
-            Ray   ray = mScene.mCamera.GenerateRay(sample);
-            Isect isect;
-            isect.dist = 1e36f;
+						Ray   ray = mScene.mCamera.GenerateRay(sample);
+						Isect isect;
+						isect.dist = 1e36f;
 
-            if(mScene.Intersect(ray, isect))
-            {
-                float dotLN = Dot(isect.normal, -ray.dir);
+						if (mScene.Intersect(ray, isect))
+						{
+							float dotLN = Dot(isect.normal, -ray.dir);
 
-                if(dotLN > 0)
-                    mFramebuffer.AddColor(sample, Vec3f(dotLN), wavelength);
-                else
-                    mFramebuffer.AddColor(sample, Vec3f(-dotLN, 0, 0), wavelength);
-            }
-        }
-
+							if (dotLN > 0)
+								mFramebuffer.AddColor(sample, Vec3f(dotLN), wavelength);
+							else
+								mFramebuffer.AddColor(sample, Vec3f(-dotLN, 0, 0), wavelength);
+						}
+					}
+				}
         mIterations++;
     }
 

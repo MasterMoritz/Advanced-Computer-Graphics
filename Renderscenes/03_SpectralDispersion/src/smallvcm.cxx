@@ -40,7 +40,7 @@
 #include "html_writer.hxx"
 #include "config.hxx"
 
-#define NO_OMP
+
 
 #ifndef NO_OMP
 #include <omp.h>
@@ -90,9 +90,7 @@ float render(
 #else
             int threadId = 0;
 #endif
-						for (int wavelength = 380; wavelength < 780.1; wavelength += 20) {
-							renderers[threadId]->RunIteration(iter, wavelength);
-						}
+						renderers[threadId]->RunIteration(iter);
 
 #pragma omp atomic
             iter++; // counts number of iterations
@@ -109,9 +107,7 @@ float render(
 #else
             int threadId = 0;
 #endif
-						for (int wavelength = 380; wavelength < 780.1; wavelength += 20) {
-							renderers[threadId]->RunIteration(iter, wavelength);
-						}
+						renderers[threadId]->RunIteration(iter);
         }
     }
 
