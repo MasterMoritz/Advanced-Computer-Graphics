@@ -237,7 +237,7 @@ void ParseCommandline(int argc, const char *argv[], Config &oConfig)
     oConfig.mBaseSeed      = 1234;
     oConfig.mMaxPathLength = 10;
     oConfig.mMinPathLength = 0;
-    oConfig.mResolution    = Vec2i(512, 512);
+    oConfig.mResolution    = Vec2i(512, 512);	//choose a lower value (e.g. 64x64) to get a result in reasonable time
     oConfig.mFullReport    = false;
     oConfig.mRadiusFactor  = 0.003f;
     oConfig.mRadiusAlpha   = 0.75f;

@@ -32,6 +32,7 @@
 #include <algorithm>
 #include <map>
 #include <mutex>
+#include <iostream>
 #include "utils.hxx"
 #include "conversion.hxx"
 
@@ -58,11 +59,15 @@ public:
 		int x = int(aSample.x);
 		int y = int(aSample.y);
 		//m.lock();
-		std::map<double, double>::iterator it = mColor[x + y * mResX].find(aWavelength);
-		if (it == mColor[x + y * mResX].end())
-			mColor[x + y * mResX].insert(std::pair<double, double>(aWavelength, (double)aColor.x));
-		else
+		std::map<int, double>::iterator it = mColor[x + y * mResX].find((int)aWavelength);
+		if (it == mColor[x + y * mResX].end()) {
+			mColor[x + y * mResX].insert(std::pair<int, double>((int)aWavelength, (double)aColor.x));
+			//std::cout << "\n[" << x << " " << y << "] " << aColor.x << " [" << aWavelength << "nm]";
+		}
+		else {
 			it->second += aColor.x;
+			//std::cout << "\n[" << x << " " << y << "] " << it->second << " [" << aWavelength << "nm]";
+		}
 		//m.unlock();
 	}
 
@@ -254,6 +259,8 @@ public:
 				float g = gVal * 255;
 				float b = bVal * 255;
 
+				std::cout << "[" << r << " " << g << " " << b << "]\n";
+
 				typedef unsigned char byte;
 
 				byte bgrB[3];
@@ -326,7 +333,7 @@ public:
 
 private:
 
-	std::vector<std::map<double, double>> mColor;	//the SPD for each pixel
+	std::vector<std::map<int, double>> mColor;	//the SPD for each pixel
 	int								 curPixel;
 	Vec2f              mResolution;
 	int                mResX;
