@@ -56,13 +56,7 @@ public:
 
         int x = int(aSample.x);
         int y = int(aSample.y);
-				if (mColor.count(x + y * mResX == 0)) {
-					std::map<double, double> map(aWavelength, (double)aColor.x);
-					mColor.insert(std::pair<int, std::map<double, double>>(x + y * mResX, map));
-				}
-				else {
-					mColor.at(x + y * mResX).insert(std::pair<double, double>(aWavelength, (double)aColor.x));
-				}
+				mColor[x + y * mResX].insert(std::pair<double, double>(aWavelength, (double)aColor.x));
     }
 
     //////////////////////////////////////////////////////////////////////////
@@ -72,7 +66,7 @@ public:
         mResolution = aResolution;
         mResX = int(aResolution.x);
         mResY = int(aResolution.y);
-        //mColor.resize(mResX * mResY);
+				mColor.resize(mResX*mResY);
         Clear();
     }
 
@@ -140,7 +134,7 @@ public:
 								double xVal, yVal, zVal;
 
 								//calculate the CIE tristimulus values
-								spectrum_to_xyz(&spec_intens, &xVal, &yVal, &zVal);
+								spectrum_to_xyz(&spec_intens_trampoline, this, &xVal, &yVal, &zVal);
 
 								//convert to RGB (using the Rec.709 HDTV matrix, with D65 whitepoint)
 								double rVal, gVal, bVal;
@@ -235,7 +229,7 @@ public:
 								double xVal, yVal, zVal;
 
 								//calculate the CIE tristimulus values
-								spectrum_to_xyz(&spec_intens, &xVal, &yVal, &zVal);
+								spectrum_to_xyz(&spec_intens_trampoline, this, &xVal, &yVal, &zVal);
 
 								//convert to RGB (using the Rec.709 HDTV matrix, with D65 whitepoint)
 								double rVal, gVal, bVal;
@@ -287,7 +281,7 @@ public:
 								double xVal, yVal, zVal;
 
 								//calculate the CIE tristimulus values
-								spectrum_to_xyz(&spec_intens, &xVal, &yVal, &zVal);
+								spectrum_to_xyz(&spec_intens_trampoline, this, &xVal, &yVal, &zVal);
 
 								//convert to RGB (using the Rec.709 HDTV matrix, with D65 whitepoint)
 								double rVal, gVal, bVal;
@@ -314,14 +308,19 @@ public:
         }
     }
 
-		static double spec_intens(double wavelength) {
+		static double spec_intens_trampoline(double wavelength, void *framebuffer) {
+			Framebuffer *self = static_cast<Framebuffer*>(framebuffer);
+			return self->spec_intens(wavelength);
+		}
+
+		double spec_intens(double wavelength) {
 			return mColor[curPixel].at(wavelength);
 		};
 
 private:
 
-		static std::map<int, std::map<double, double>> mColor;	//the SPD for each pixel
-		static int				 curPixel;
+		std::vector<std::map<double, double>> mColor;	//the SPD for each pixel
+		int								 curPixel;
     Vec2f              mResolution;
     int                mResX;
     int                mResY;

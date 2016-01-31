@@ -40,6 +40,8 @@
 #include "html_writer.hxx"
 #include "config.hxx"
 
+#define NO_OMP
+
 #ifndef NO_OMP
 #include <omp.h>
 #endif

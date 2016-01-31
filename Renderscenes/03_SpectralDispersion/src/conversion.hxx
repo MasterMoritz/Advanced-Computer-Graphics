@@ -31,6 +31,9 @@ http://netpbm.sourceforge.net/
 (The program was called cietoppm in earlier
 versions of Netpbm.)
 
+
+////slightly modified////
+
 */
 
 #include <stdio.h>
@@ -278,7 +281,7 @@ arguments which respect the identity:
 x + y + z = 1.
 */
 
-void spectrum_to_xyz(double(*spec_intens)(double wavelength),
+void spectrum_to_xyz(double(*spec_intens)(double wavelength, void *framebuffer), void *framebuffer,
 	double *x, double *y, double *z)
 {
 	int i;
@@ -332,7 +335,7 @@ void spectrum_to_xyz(double(*spec_intens)(double wavelength),
 	for (i = 0, lambda = 380; lambda < 780.1; /*i++*/i+=4, lambda += /*5*/20) {
 		double Me;
 
-		Me = (*spec_intens)(lambda);
+		Me = (*spec_intens)(lambda, framebuffer);
 		X += Me * cie_colour_match[i][0];
 		Y += Me * cie_colour_match[i][1];
 		Z += Me * cie_colour_match[i][2];
