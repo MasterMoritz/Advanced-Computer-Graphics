@@ -7,14 +7,14 @@
 #include <string>
 #include <sstream>
 
-std::vector<Vec3f> readObjFile(const char* file_path) {
+int readObjFile(const char* file_path, std::vector<Vec3f>& vertices, std::vector<int>& indices) {
 	
 	std::ifstream obj_file(file_path);
 	std::string line;
 	std::string line_type;
 
-	std::vector<Vec3f> vertices;
 	float x, y, z;
+	int ix, iy, iz;
 
 	//read obj vertices from file
 	while (std::getline(obj_file, line)) {
@@ -24,17 +24,25 @@ std::vector<Vec3f> readObjFile(const char* file_path) {
 		if (line_type.compare("v") == 0) {
 			if (!(iss >> x >> y >> z)) {
 				//error with file
-				break;
+				return -1;
 			}
 			//add vertices to vector
 			vertices.push_back(Vec3f(x, y, z));
 		}
+		else if (line_type.compare("f") == 0) {
+			char slash;
+			if (!(iss >> ix >> slash >> iy >> slash >> iz)) {
+				//error with file
+				return -2;
+			}
+			//add vertices to vector
+			indices.push_back(ix);
+			indices.push_back(iy);
+			indices.push_back(iz);
+		}	
 	}
 
-	for (int i = 0; i < vertices.size(); i++) {
-		std::cout << vertices[i].x << " " << vertices[i].y << " " << vertices[i].z << "\n";
-	}
-	return vertices;
+	return 0;
 }
 
 #endif
