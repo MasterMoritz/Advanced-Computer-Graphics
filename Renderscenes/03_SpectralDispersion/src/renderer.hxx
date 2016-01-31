@@ -44,7 +44,7 @@ public:
 
     virtual ~AbstractRenderer(){}
 
-    virtual void RunIteration(int aIteration) = 0;
+    virtual void RunIteration(int aIteration, double wavelength) = 0;
 
     void GetFramebuffer(Framebuffer& oFramebuffer)
     {

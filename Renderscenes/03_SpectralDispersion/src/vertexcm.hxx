@@ -281,8 +281,13 @@ public:
         mRadiusAlpha = aRadiusAlpha;
     }
 
-    virtual void RunIteration(int aIteration)
+    virtual void RunIteration(int aIteration, double wavelength)
     {
+				//update reflectance and index of refraction with respect to the currently rendered wavelength
+				for (Material m : mScene.mMaterials) {
+					m.calculateIOR(wavelength);
+					m.calculatemDiffuseReflectance(wavelength, m.mDiffuseReflectance);
+				}
         // While we have the same number of pixels (camera paths)
         // and light paths, we do keep them separate for clarity reasons
         const int resX = int(mScene.mCamera.mResolution.x);
@@ -380,7 +385,7 @@ public:
                 if(!bsdf.IsDelta() && (mUseVC || mLightTraceOnly))
                 {
                     if(lightState.mPathLength + 1 >= mMinPathLength)
-                        ConnectToCamera(lightState, hitPoint, bsdf);
+                        ConnectToCamera(lightState, hitPoint, bsdf, wavelength);
                 }
 
                 // Terminate if the path would become too long after scattering
@@ -541,7 +546,7 @@ public:
                     break;
             }
 
-            mFramebuffer.AddColor(screenSample, color);
+            mFramebuffer.AddColor(screenSample, color, wavelength);
         }
 
         mIterations++;
@@ -863,7 +868,8 @@ private:
     void ConnectToCamera(
         const SubPathState &aLightState,
         const Vec3f        &aHitpoint,
-        const LightBSDF    &aBsdf)
+        const LightBSDF    &aBsdf,
+				const double wavelength)
     {
         const Camera &camera    = mScene.mCamera;
         Vec3f directionToCamera = camera.mPosition - aHitpoint;
@@ -929,7 +935,7 @@ private:
             if(mScene.Occluded(aHitpoint, directionToCamera, distance))
                 return;
 
-            mFramebuffer.AddColor(imagePos, contrib);
+            mFramebuffer.AddColor(imagePos, contrib, wavelength);
         }
     }
 

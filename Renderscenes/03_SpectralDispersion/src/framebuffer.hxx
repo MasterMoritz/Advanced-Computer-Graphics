@@ -29,7 +29,10 @@
 #include <cmath>
 #include <fstream>
 #include <string.h>
+#include <algorithm>
+#include <map>
 #include "utils.hxx"
+#include "conversion.hxx"
 
 class Framebuffer
 {
@@ -39,10 +42,11 @@ public:
     {}
 
     //////////////////////////////////////////////////////////////////////////
-    // Accumulation
+    // Accumulation (calculates the XYZ values - not yet normalized - for individual pixels)
     void AddColor(
         const Vec2f& aSample,
-        const Vec3f& aColor)
+        const Vec3f& aColor,
+				const double aWavelength)
     {
         if(aSample.x < 0 || aSample.x >= mResolution.x)
             return;
@@ -52,8 +56,13 @@ public:
 
         int x = int(aSample.x);
         int y = int(aSample.y);
-
-        mColor[x + y * mResX] = mColor[x + y * mResX] + aColor;
+				if (mColor.count(x + y * mResX == 0)) {
+					std::map<double, double> map(aWavelength, (double)aColor.x);
+					mColor.insert(std::pair<int, std::map<double, double>>(x + y * mResX, map));
+				}
+				else {
+					mColor.at(x + y * mResX).insert(std::pair<double, double>(aWavelength, (double)aColor.x));
+				}
     }
 
     //////////////////////////////////////////////////////////////////////////
@@ -63,25 +72,32 @@ public:
         mResolution = aResolution;
         mResX = int(aResolution.x);
         mResY = int(aResolution.y);
-        mColor.resize(mResX * mResY);
+        //mColor.resize(mResX * mResY);
         Clear();
     }
 
     void Clear()
     {
-        memset(&mColor[0], 0, sizeof(Vec3f) * mColor.size());
+        //memset(&mColor[0], 0, sizeof(Vec3f) * mColor.size());
+				mColor.clear();
     }
 
-    void Add(const Framebuffer& aOther)
-    {
-        for(size_t i=0; i<mColor.size(); i++)
-            mColor[i] = mColor[i] + aOther.mColor[i];
+		void Add(const Framebuffer& aOther)
+		{
+			for (size_t i = 0; i < mColor.size(); i++) {
+				for (auto&& c : mColor[i]) {
+					c.second += aOther.mColor[i].at(c.first);
+				}
+			}
     }
 
     void Scale(float aScale)
     {
-        for(size_t i=0; i<mColor.size(); i++)
-            mColor[i] = mColor[i] * Vec3f(aScale);
+			for (size_t i = 0; i < mColor.size(); i++) {
+				for (auto&& c : mColor[i]) {
+					c.second *= aScale;
+				}
+			}
     }
 
     //////////////////////////////////////////////////////////////////////////
@@ -94,7 +110,7 @@ public:
         {
             for(int x=0; x<mResX; x++)
             {
-                lum += Luminance(mColor[x + y*mResX]);
+                //lum += Luminance(mColor[x + y*mResX]);
             }
         }
 
@@ -114,16 +130,33 @@ public:
         ppm << mResX << " " << mResY << std::endl;
         ppm << "255" << std::endl;
 
-        Vec3f *ptr = &mColor[0];
+				//spectrum_to_xyz()
 
         for(int y=0; y<mResY; y++)
         {
             for(int x=0; x<mResX; x++)
             {
-                ptr = &mColor[x + y*mResX];
-                int r = int(std::pow(ptr->x, invGamma) * 255.f);
-                int g = int(std::pow(ptr->y, invGamma) * 255.f);
-                int b = int(std::pow(ptr->z, invGamma) * 255.f);
+								curPixel = x + y*mResX;
+								double xVal, yVal, zVal;
+
+								//calculate the CIE tristimulus values
+								spectrum_to_xyz(&spec_intens, &xVal, &yVal, &zVal);
+
+								//convert to RGB (using the Rec.709 HDTV matrix, with D65 whitepoint)
+								double rVal, gVal, bVal;
+								xyz_to_rgb(&HDTVsystem, xVal, yVal, zVal, &rVal, &gVal, &bVal);
+								constrain_rgb(&rVal, &gVal, &bVal);
+
+								//gamma correction
+                /*int r = int(std::pow(rVal, invGamma) * 255.f);
+                int g = int(std::pow(gVal, invGamma) * 255.f);
+                int b = int(std::pow(bVal, invGamma) * 255.f);*/
+								gamma_correct_rgb(&HDTVsystem, &rVal, &gVal, &bVal);
+								
+								norm_rgb(&rVal, &gVal, &bVal);
+								int r = rVal * 255;
+								int g = gVal * 255;
+								int b = bVal * 255;
 
                 ppm << std::min(255, std::max(0, r)) << " "
                     << std::min(255, std::max(0, g)) << " "
@@ -134,6 +167,7 @@ public:
         }
     }
 
+		//TODO: rewrite
     void SavePFM(const char* aFilename)
     {
         std::ofstream ppm(aFilename, std::ios::binary);
@@ -197,17 +231,34 @@ public:
             for(int x=0; x<mResX; x++)
             {
                 // bmp is stored from bottom up
-                const Vec3f &rgbF = mColor[x + (mResY-y-1)*mResX];
+								curPixel = x + (mResY - y - 1)*mResX;
+								double xVal, yVal, zVal;
+
+								//calculate the CIE tristimulus values
+								spectrum_to_xyz(&spec_intens, &xVal, &yVal, &zVal);
+
+								//convert to RGB (using the Rec.709 HDTV matrix, with D65 whitepoint)
+								double rVal, gVal, bVal;
+								xyz_to_rgb(&HDTVsystem, xVal, yVal, zVal, &rVal, &gVal, &bVal);
+								constrain_rgb(&rVal, &gVal, &bVal);
+
+								//gamma correction
+								/*int r = int(std::pow(rVal, invGamma) * 255.f);
+								int g = int(std::pow(gVal, invGamma) * 255.f);
+								int b = int(std::pow(bVal, invGamma) * 255.f);*/
+								gamma_correct_rgb(&HDTVsystem, &rVal, &gVal, &bVal);
+
+								norm_rgb(&rVal, &gVal, &bVal);
+								float r = rVal * 255;
+								float g = gVal * 255;
+								float b = bVal * 255;
+
                 typedef unsigned char byte;
-                float gammaBgr[3];
-                gammaBgr[0] = std::pow(rgbF.z, invGamma) * 255.f;
-                gammaBgr[1] = std::pow(rgbF.y, invGamma) * 255.f;
-                gammaBgr[2] = std::pow(rgbF.x, invGamma) * 255.f;
 
                 byte bgrB[3];
-                bgrB[0] = byte(std::min(255.f, std::max(0.f, gammaBgr[0])));
-                bgrB[1] = byte(std::min(255.f, std::max(0.f, gammaBgr[1])));
-                bgrB[2] = byte(std::min(255.f, std::max(0.f, gammaBgr[2])));
+                bgrB[0] = byte(std::min(255.f, std::max(0.f, r)));
+                bgrB[1] = byte(std::min(255.f, std::max(0.f, g)));
+                bgrB[2] = byte(std::min(255.f, std::max(0.f, b)));
 
                 bmp.write((char*)&bgrB, sizeof(bgrB));
             }
@@ -232,7 +283,20 @@ public:
                 typedef unsigned char byte;
                 byte rgbe[4] = {0,0,0,0};
 
-                const Vec3f &rgbF = mColor[x + y*mResX];
+								curPixel = x + y*mResX;
+								double xVal, yVal, zVal;
+
+								//calculate the CIE tristimulus values
+								spectrum_to_xyz(&spec_intens, &xVal, &yVal, &zVal);
+
+								//convert to RGB (using the Rec.709 HDTV matrix, with D65 whitepoint)
+								double rVal, gVal, bVal;
+								xyz_to_rgb(&HDTVsystem, xVal, yVal, zVal, &rVal, &gVal, &bVal);
+								constrain_rgb(&rVal, &gVal, &bVal);
+
+								norm_rgb(&rVal, &gVal, &bVal);
+								const Vec3f rgbF(rVal, gVal, bVal);
+								
                 float v = std::max(rgbF.x, std::max(rgbF.y, rgbF.z));
 
                 if(v >= 1e-32f)
@@ -250,9 +314,14 @@ public:
         }
     }
 
+		static double spec_intens(double wavelength) {
+			return mColor[curPixel].at(wavelength);
+		};
+
 private:
 
-    std::vector<Vec3f> mColor;
+		static std::map<int, std::map<double, double>> mColor;	//the SPD for each pixel
+		static int				 curPixel;
     Vec2f              mResolution;
     int                mResX;
     int                mResY;

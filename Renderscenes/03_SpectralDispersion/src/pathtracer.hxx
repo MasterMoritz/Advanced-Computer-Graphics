@@ -42,8 +42,14 @@ public:
         AbstractRenderer(aScene), mRng(aSeed)
     {}
 
-    virtual void RunIteration(int aIteration)
+    virtual void RunIteration(int aIteration, double wavelength)
     {
+				//update reflectance and index of refraction with respect to the currently rendered wavelength
+				for (Material m : mScene.mMaterials) {
+					m.calculateIOR(wavelength);
+					m.calculatemDiffuseReflectance(wavelength, m.mDiffuseReflectance);
+				}
+
         // We sample lights uniformly
         const int   lightCount    = mScene.GetLightCount();
         const float lightPickProb = 1.f / lightCount;
@@ -208,7 +214,7 @@ public:
                     isect.dist = 1e36f;
                 }
             }
-            mFramebuffer.AddColor(sample, color);
+            mFramebuffer.AddColor(sample, color, wavelength);
         }
 
         mIterations++;

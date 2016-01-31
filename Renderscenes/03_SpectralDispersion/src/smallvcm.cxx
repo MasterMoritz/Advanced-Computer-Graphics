@@ -88,7 +88,9 @@ float render(
 #else
             int threadId = 0;
 #endif
-            renderers[threadId]->RunIteration(iter);
+						for (int wavelength = 380; wavelength < 780.1; wavelength += 20) {
+							renderers[threadId]->RunIteration(iter, wavelength);
+						}
 
 #pragma omp atomic
             iter++; // counts number of iterations
@@ -105,7 +107,9 @@ float render(
 #else
             int threadId = 0;
 #endif
-            renderers[threadId]->RunIteration(iter);
+						for (int wavelength = 380; wavelength < 780.1; wavelength += 20) {
+							renderers[threadId]->RunIteration(iter, wavelength);
+						}
         }
     }
 

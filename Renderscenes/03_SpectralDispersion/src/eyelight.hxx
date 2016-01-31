@@ -44,7 +44,7 @@ public:
         AbstractRenderer(aScene), mRng(aSeed)
     {}
 
-    virtual void RunIteration(int aIteration)
+    virtual void RunIteration(int aIteration, double wavelength)
     {
         const int resX = int(mScene.mCamera.mResolution.x);
         const int resY = int(mScene.mCamera.mResolution.y);
@@ -68,9 +68,9 @@ public:
                 float dotLN = Dot(isect.normal, -ray.dir);
 
                 if(dotLN > 0)
-                    mFramebuffer.AddColor(sample, Vec3f(dotLN));
+                    mFramebuffer.AddColor(sample, Vec3f(dotLN), wavelength);
                 else
-                    mFramebuffer.AddColor(sample, Vec3f(-dotLN, 0, 0));
+                    mFramebuffer.AddColor(sample, Vec3f(-dotLN, 0, 0), wavelength);
             }
         }
 
