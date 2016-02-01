@@ -60,6 +60,7 @@ public:
 		int y = int(aSample.y);
 
 		mColor[x + y * mResX][(int)aWavelength] += aColor.x;
+		//std::cout << "\n[" << x << " " << y << "] " << mColor[x + y * mResX][(int)aWavelength] << " [" << aWavelength << "nm]";
 	}
 
 	//////////////////////////////////////////////////////////////////////////
@@ -132,7 +133,7 @@ public:
 		ppm << mResX << " " << mResY << std::endl;
 		ppm << "255" << std::endl;
 
-		//spectrum_to_xyz()
+		//norm_spectrum();
 
 		for (int y = 0; y < mResY; y++)
 		{
@@ -227,7 +228,10 @@ public:
 
 		bmp.write((char*)&header, sizeof(header));
 
-		const float invGamma = 1.f / aGamma;
+		//const float invGamma = 1.f / aGamma;
+		
+		//norm_spectrum();
+		
 		for (int y = 0; y < mResY; y++)
 		{
 			for (int x = 0; x < mResX; x++)
@@ -255,7 +259,7 @@ public:
 				float g = gVal * 255;
 				float b = bVal * 255;
 
-				//std::cout << "[" << r << " " << g << " " << b << "]\n";
+				std::cout << "[" << r << " " << g << " " << b << "]\n";
 
 				typedef unsigned char byte;
 
@@ -326,6 +330,28 @@ public:
 	double spec_intens(double wavelength) {
 		return mColor[curPixel].at(wavelength);
 	};
+
+	void norm_spectrum()
+	{
+		/*double currentMax = 0.0;
+		for (int i = 0; i < mColor.size(); i++) {
+			for (auto& spec : mColor[i]) {
+				if (spec.second > currentMax) {
+					currentMax = spec.second;
+				}
+			}
+		}
+		if (currentMax > 0) {*/
+			for (int i = 0; i < mColor.size(); i++) {
+				for (int z = 0; z < mColor[i].size(); z++) {
+					if (mColor[i][z] > 1.0f) {
+						mColor[i][z] = 1.0f;
+					}
+					//mColor[i][z] /= currentMax;
+				}
+			}
+		//}
+	}
 
 private:
 

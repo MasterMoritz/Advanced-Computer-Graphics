@@ -172,13 +172,15 @@ public:
 
         // 2) glossy white floor
         mat.Reset();
-        mat.mDiffuseReflectance = Vec3f(0.1f);
-        mat.mPhongReflectance   = Vec3f(0.7f);
-        mat.mPhongExponent         = 90.f;
+				//mat.mDiffuseReflectance = Vec3f(0.1f, 0.1f, 0.1f);
+        mat.mDiffuseReflectance = Vec3f(0.8f);
+        //mat.mPhongReflectance   = Vec3f(0.7f);
+        //mat.mPhongExponent         = 90.f;
         mMaterials.push_back(mat);
 
         // 3) diffuse green left wall
         mat.Reset();
+				//mat.mDiffuseReflectance = Vec3f(0.1f, 0.1f, 0.1f);
         mat.mDiffuseReflectance = Vec3f(0.156863f, 0.803922f, 0.172549f);
 		if (aBoxMask & kWhiteWalls) {
         	mat.mDiffuseReflectance = Vec3f(0.803922f, 0.803922f, 0.803922f);
@@ -187,6 +189,7 @@ public:
 
         // 4) diffuse red right wall
         mat.Reset();
+				//mat.mDiffuseReflectance = Vec3f(0.1f, 0.1f, 0.1f);
         mat.mDiffuseReflectance = Vec3f(0.803922f, 0.152941f, 0.152941f);
 		if (aBoxMask & kWhiteWalls) {
         	mat.mDiffuseReflectance = Vec3f(0.803922f, 0.803922f, 0.803922f);
@@ -195,6 +198,7 @@ public:
 
         // 5) diffuse white back wall
         mat.Reset();
+				//mat.mDiffuseReflectance = Vec3f(0.1f, 0.1f, 0.1f);
         mat.mDiffuseReflectance = Vec3f(0.803922f, 0.803922f, 0.803922f);
         mMaterials.push_back(mat);
 
@@ -211,6 +215,7 @@ public:
 
         // 8) diffuse blue wall (back wall for glossy floor)
         mat.Reset();
+				//mat.mDiffuseReflectance = Vec3f(0.1f, 0.1f, 0.1f);
         mat.mDiffuseReflectance = Vec3f(0.156863f, 0.172549f, 0.803922f);
 		if (aBoxMask & kWhiteWalls) {
         	mat.mDiffuseReflectance = Vec3f(0.803922f, 0.803922f, 0.803922f);
@@ -231,19 +236,20 @@ public:
 				};
         mMaterials.push_back(mat);
 
-		// 10) Diamond Material	
+				// 10) Diamond Material	
         mat.Reset();
+				//mat.mDiffuseReflectance = Vec3f(0.2f, 1.0f, 0.2f);
         mat.mMirrorReflectance  = Vec3f(1.f);
-		mat.mIOR = 1.58f;
+				mat.mIOR = 1.58f;
         mat.calculateIOR = [&mat](float wave_length) {
-			wave_length /= 1000;
-			float wave_squared = wave_length * wave_length;
-			mat.mIOR = sqrt( (1.72448482 * wave_squared) / (wave_squared - 0.0134871947) + 
-			                 (0.390104889 * wave_squared) / (wave_squared - 0.0569318095) + 
-			                 (1.04572858 * wave_squared) / (wave_squared - 118.557185));
-			return mat.mIOR;
-		};
-		mMaterials.push_back(mat);
+					wave_length /= 1000;
+					float wave_squared = wave_length * wave_length;
+					mat.mIOR = sqrt( (1.72448482 * wave_squared) / (wave_squared - 0.0134871947) + 
+													 (0.390104889 * wave_squared) / (wave_squared - 0.0569318095) + 
+													 (1.04572858 * wave_squared) / (wave_squared - 118.557185));
+					return mat.mIOR;
+				};
+				mMaterials.push_back(mat);
 
         delete mGeometry;
 

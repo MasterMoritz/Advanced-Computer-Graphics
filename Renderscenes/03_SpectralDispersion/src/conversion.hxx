@@ -334,12 +334,22 @@ void spectrum_to_xyz(double(*spec_intens)(double wavelength, void *framebuffer),
 	double lambda = 380;
 
 	for (int i = 0; lambda < 781; /*i++*/i+=4, lambda += /*5*/20) {
+
+	//double lambda = 460;
+	//for (int i = 16; lambda < 501; /*i++*/i += 4, lambda += /*5*/20) {
 		double Me;
 
 		Me = (*spec_intens)(lambda, framebuffer);
+		if (Me == 0) {
+			*x = 0;
+			*y = 0;
+			*z = 0;
+			return;
+		}
 		X += Me * cie_colour_match[i][0];
 		Y += Me * cie_colour_match[i][1];
 		Z += Me * cie_colour_match[i][2];
+		//std::cout << "\n!!! emmittance: " << Me << " cieX:" << cie_colour_match[i][0] << " cieY:" << cie_colour_match[i][1] << " cieZ:" << cie_colour_match[i][2] << "\n";
 	}
 	XYZ = (X + Y + Z);
 	*x = X / XYZ;
