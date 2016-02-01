@@ -333,7 +333,7 @@ public:
 
 	void norm_spectrum()
 	{
-		/*double currentMax = 0.0;
+		double currentMax = 0.0;
 		for (int i = 0; i < mColor.size(); i++) {
 			for (auto& spec : mColor[i]) {
 				if (spec.second > currentMax) {
@@ -341,16 +341,16 @@ public:
 				}
 			}
 		}
-		if (currentMax > 0) {*/
+		if (currentMax > 0) {
 			for (int i = 0; i < mColor.size(); i++) {
-				for (int z = 0; z < mColor[i].size(); z++) {
-					if (mColor[i][z] > 1.0f) {
+				for (int z = 380; z < 781; z+=20) {
+					/*if (mColor[i][z] > 1.0f) {
 						mColor[i][z] = 1.0f;
-					}
-					//mColor[i][z] /= currentMax;
+					}*/
+					mColor[i][z] /= currentMax;
 				}
 			}
-		//}
+		}
 	}
 
 private:
