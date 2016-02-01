@@ -58,17 +58,8 @@ public:
 
 		int x = int(aSample.x);
 		int y = int(aSample.y);
-		//m.lock();
-		std::map<int, double>::iterator it = mColor[x + y * mResX].find((int)aWavelength);
-		if (it == mColor[x + y * mResX].end()) {
-			mColor[x + y * mResX].insert(std::pair<int, double>((int)aWavelength, (double)aColor.x));
-			//std::cout << "\n[" << x << " " << y << "] " << aColor.x << " [" << aWavelength << "nm]";
-		}
-		else {
-			it->second += aColor.x;
-			//std::cout << "\n[" << x << " " << y << "] " << it->second << " [" << aWavelength << "nm]";
-		}
-		//m.unlock();
+
+		mColor[x + y * mResX][(int)aWavelength] += aColor.x;
 	}
 
 	//////////////////////////////////////////////////////////////////////////
@@ -79,7 +70,12 @@ public:
 		mResX = int(aResolution.x);
 		mResY = int(aResolution.y);
 		Clear();
-		mColor.resize(mResX*mResY);
+		mColor.resize(mResX*mResY+1);
+		for (int i = 0; i < mColor.size(); i++) {
+			for (int l = 380; l < 781; l += 20) {
+				mColor[i].insert(std::pair<int, double>(l, 0.0));
+			}
+		}
 	}
 
 	void Clear()
@@ -91,7 +87,7 @@ public:
 	void Add(const Framebuffer& aOther)
 	{
 		for (size_t i = 0; i < mColor.size(); i++) {
-			for (auto&& c : mColor[i]) {
+			for (auto& c : mColor[i]) {
 				c.second += aOther.mColor[i].at(c.first);
 			}
 		}
@@ -100,7 +96,7 @@ public:
 	void Scale(float aScale)
 	{
 		for (size_t i = 0; i < mColor.size(); i++) {
-			for (auto&& c : mColor[i]) {
+			for (auto& c : mColor[i]) {
 				c.second *= aScale;
 			}
 		}
@@ -259,7 +255,7 @@ public:
 				float g = gVal * 255;
 				float b = bVal * 255;
 
-				std::cout << "[" << r << " " << g << " " << b << "]\n";
+				//std::cout << "[" << r << " " << g << " " << b << "]\n";
 
 				typedef unsigned char byte;
 
@@ -338,7 +334,6 @@ private:
 	Vec2f              mResolution;
 	int                mResX;
 	int                mResY;
-	//std::mutex				 m;
 };
 
 #endif //__FRAMEBUFFER_HXX__

@@ -44,8 +44,8 @@ its three primary illuminants and the x and y coordinates of
 the white point. */
 
 struct colourSystem {
-	char *name;     	    	    /* Colour system name */
-	double xRed, yRed,	    	    /* Red x, y */
+	const char *name;     	    /* Colour system name */
+	double xRed, yRed,	    	/* Red x, y */
 		xGreen, yGreen,  	    /* Green x, y */
 		xBlue, yBlue,    	    /* Blue x, y */
 		xWhite, yWhite,  	    /* White point x, y */
@@ -69,7 +69,7 @@ http://www.poynton.com/GammaFAQ.html
 
 #define GAMMA_REC709	0		/* Rec. 709 */
 
-static struct colourSystem
+struct colourSystem
 /* Name                  xRed    yRed    xGreen  yGreen  xBlue  yBlue    White point        Gamma   */
 NTSCsystem = { "NTSC",               0.67,   0.33,   0.21,   0.71,   0.14,   0.08,   IlluminantC,    GAMMA_REC709 },
 EBUsystem = { "EBU (PAL/SECAM)",    0.64,   0.33,   0.29,   0.60,   0.15,   0.06,   IlluminantD65,  GAMMA_REC709 },
@@ -299,7 +299,7 @@ void spectrum_to_xyz(double(*spec_intens)(double wavelength, void *framebuffer),
 	between floating-point types" from certain persnickety
 	compilers. */
 
-	static double cie_colour_match[81][3] = {
+	double cie_colour_match[81][3] = {
 		{ 0.0014,0.0000,0.0065 },{ 0.0022,0.0001,0.0105 },{ 0.0042,0.0001,0.0201 },
 		{ 0.0076,0.0002,0.0362 },{ 0.0143,0.0004,0.0679 },{ 0.0232,0.0006,0.1102 },
 		{ 0.0435,0.0012,0.2074 },{ 0.0776,0.0022,0.3713 },{ 0.1344,0.0040,0.6456 },
@@ -331,9 +331,9 @@ void spectrum_to_xyz(double(*spec_intens)(double wavelength, void *framebuffer),
 
 	double X = 0, Y = 0, Z = 0;
 	double XYZ;
-	double lambda = 540;
-	//for (int i = 0; lambda < 780.1; /*i++*/i+=4, lambda += /*5*/20) {
-	for (int i = 32; lambda < 540.1; /*i++*/i+=4, lambda += /*5*/20) {
+	double lambda = 380;
+
+	for (int i = 0; lambda < 781; /*i++*/i+=4, lambda += /*5*/20) {
 		double Me;
 
 		Me = (*spec_intens)(lambda, framebuffer);
