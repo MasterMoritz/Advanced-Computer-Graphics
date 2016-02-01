@@ -284,9 +284,6 @@ x + y + z = 1.
 void spectrum_to_xyz(double(*spec_intens)(double wavelength, void *framebuffer), void *framebuffer,
 	double *x, double *y, double *z)
 {
-	int i;
-	double lambda, X = 0, Y = 0, Z = 0, XYZ;
-
 	/* CIE colour matching functions xBar, yBar, and zBar for
 	wavelengths from 380 through 780 nanometers, every 5
 	nanometers.  For a wavelength lambda in this range:
@@ -332,7 +329,11 @@ void spectrum_to_xyz(double(*spec_intens)(double wavelength, void *framebuffer),
 		{ 0.0001,0.0000,0.0000 },{ 0.0001,0.0000,0.0000 },{ 0.0000,0.0000,0.0000 }
 	};
 
-	for (i = 0, lambda = 380; lambda < 780.1; /*i++*/i+=4, lambda += /*5*/20) {
+	double X = 0, Y = 0, Z = 0;
+	double XYZ;
+	double lambda = 540;
+	//for (int i = 0; lambda < 780.1; /*i++*/i+=4, lambda += /*5*/20) {
+	for (int i = 32; lambda < 540.1; /*i++*/i+=4, lambda += /*5*/20) {
 		double Me;
 
 		Me = (*spec_intens)(lambda, framebuffer);

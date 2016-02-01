@@ -148,9 +148,10 @@ uint g_SceneConfigs[] = {
     Scene::kGlossyFloor | Scene::kLargeMirrorSphere | Scene::kLightCeiling,
     Scene::kGlossyFloor | Scene::kBothSmallSpheres  | Scene::kLightPoint,
     Scene::kGlossyFloor | Scene::kBothSmallSpheres  | Scene::kLightBackground,
-	//Scene::kLargeGlassSphere | Scene::kLightPoint | Scene::kWhiteWalls,
-	//Scene::kLargeGlassSphere | Scene::kLightCeiling | Scene::kWhiteWalls,
-	//Scene::kDispersionSphere | Scene::kLightPoint | Scene::kWhiteWalls
+	Scene::kLargeGlassSphere | Scene::kLightPoint | Scene::kWhiteWalls,
+	Scene::kLargeGlassSphere | Scene::kLightCeiling | Scene::kWhiteWalls,
+	Scene::kDispersionSphere | Scene::kLightPoint | Scene::kWhiteWalls,
+	Scene::kCustom | Scene::kLightPoint,
 };
 
 std::string DefaultFilename(
@@ -237,7 +238,7 @@ void ParseCommandline(int argc, const char *argv[], Config &oConfig)
     oConfig.mBaseSeed      = 1234;
     oConfig.mMaxPathLength = 10;
     oConfig.mMinPathLength = 0;
-    oConfig.mResolution    = Vec2i(512, 512);	//choose a lower value (e.g. 64x64) to get a result in reasonable time
+    oConfig.mResolution    = Vec2i(256, 256);	//choose a lower value (e.g. 64x64) to get a result in reasonable time
     oConfig.mFullReport    = false;
     oConfig.mRadiusFactor  = 0.003f;
     oConfig.mRadiusAlpha   = 0.75f;

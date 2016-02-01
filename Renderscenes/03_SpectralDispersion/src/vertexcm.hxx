@@ -283,7 +283,7 @@ public:
 
     virtual void RunIteration(int aIteration)
     {
-			for (int wavelength = 380; wavelength < 780.1; wavelength += 20) {
+			for (int wavelength = 540; wavelength < 540.1; wavelength += 20) {
 				//update reflectance and index of refraction with respect to the currently rendered wavelength
 				for (Material m : mScene.mMaterials) {
 					m.calculateIOR(wavelength);
